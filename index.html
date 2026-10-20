@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dentivo — Healthier Smiles, Brighter Lives</title>
+  <meta name="description" content="Dentivo Dental Clinic. Experience state-of-the-art 3D dental care, hospital-grade cleanliness, and bio-ceramic enamel protection.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=70">
+</head>
+
+<body>
+
+  <!-- ░░ Sticky Global Navbar ░░ -->
+  <nav id="navbar" aria-label="Primary navigation">
+    <div class="nav-logo" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+      <svg class="logo-tooth" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C9.5 2 7.7 3.6 6.8 5.6C5.9 4.7 4.6 4.3 3.7 5.1C2.5 6.2 2.9 8.3 3.7 10C4.6 11.8 5.4 13.6 5.4 16.3C5.4 17.7 5.9 19.1 7.2 19.7C8.1 20.1 9 19.3 9.5 18.4C9.9 17.6 10.4 16.7 12 16.7C13.6 16.7 14.1 17.6 14.5 18.4C15 19.3 15.9 20.1 16.8 19.7C18.1 19.1 18.6 17.7 18.6 16.3C18.6 13.6 19.4 11.8 20.3 10C21.1 8.3 21.5 6.2 20.3 5.1C19.4 4.3 18.1 4.7 17.2 5.6C16.3 3.6 14.5 2 12 2Z"/>
+      </svg>
+      <span class="nav-brand">
+        <span class="nav-clinic-name">Dr. Syed Hashim Jamshed</span>
+        <span class="nav-clinic-sub">BUKHARI DENTAL CLINIC &bull; KOHAT</span>
+      </span>
+    </div>
+
+    <ul class="nav-links" role="list">
+      <li><a href="#hero-section">Home</a></li>
+      <li><a href="#services-section">Services</a></li>
+      <li><a href="#dentist-section">Doctor Profile</a></li>
+      <li><a href="#location-section">Location</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <a class="nav-phone" href="tel:+923348289596">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M6.6 3.5c.6 0 1.1.4 1.3 1l.9 2.7c.2.5 0 1.1-.4 1.4l-1.1.9a12.5 12.5 0 0 0 6.2 6.2l.9-1.1c.4-.4 1-.5 1.4-.3l2.7.9c.6.2 1 .7 1 1.3v2.6c0 .9-.8 1.7-1.7 1.6C10.7 21 3 13.3 2.5 5.2c-.1-.9.7-1.7 1.6-1.7h2.5z"/></svg>
+        +92 334 8289596
+      </a>
+
+      <!-- Opens the booking dialog. The href is kept as the no-JS fallback:
+           without scripting this is still a plain link to the clinic's
+           address, hours and phone in the "Visit Our Clinic" section. -->
+      <a class="nav-cta-btn" id="nav-book-btn" href="#location-section" data-book-open>
+        <svg class="cal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
+        Book Visit
+      </a>
+    </div>
+  </nav>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       SECTION 1: HERO SCROLL ANIMATION SEQUENCE
+       Sequence: ezgif-87eb4f2fc51a57fe-jpg (285 frames)
+       ════════════════════════════════════════════════════════════════ -->
+  <section id="hero-section" class="scroll-sequence-section" aria-label="Hero 3D Tooth Animation">
+    <div class="sticky-viewport">
+      <canvas id="hero-canvas" class="sequence-canvas"></canvas>
+
+      <!-- Hero Overlay UI -->
+      <div id="hero-overlay" class="hero-overlay-wrap">
+        <div id="hero-content">
+
+          <!-- Centered Title -->
+          <div class="hero-heading">
+            <h1>
+              <span class="title-line">Healthier Smiles</span>
+              <span class="title-line"><span class="text-accent">Brighter</span> Lives</span>
+            </h1>
+          </div>
+
+          <!-- 4 Feature Pills -->
+          <div class="features-zone" aria-label="Key features">
+            <div class="pills-row">
+              <!-- Pill 1: Expert Care -->
+              <div class="feature-pill">
+                <div class="pill-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                </div>
+                <span class="pill-text">Expert Care</span>
+              </div>
+
+              <!-- Pill 2: Advanced Technology -->
+              <div class="feature-pill">
+                <div class="pill-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C9.5 2 7.7 3.6 6.8 5.6C5.9 4.7 4.6 4.3 3.7 5.1C2.5 6.2 2.9 8.3 3.7 10C4.6 11.8 5.4 13.6 5.4 16.3C5.4 17.7 5.9 19.1 7.2 19.7C8.1 20.1 9 19.3 9.5 18.4C9.9 17.6 10.4 16.7 12 16.7C13.6 16.7 14.1 17.6 14.5 18.4C15 19.3 15.9 20.1 16.8 19.7C18.1 19.1 18.6 17.7 18.6 16.3C18.6 13.6 19.4 11.8 20.3 10C21.1 8.3 21.5 6.2 20.3 5.1C19.4 4.3 18.1 4.7 17.2 5.6C16.3 3.6 14.5 2 12 2Z"/>
+                  </svg>
+                </div>
+                <span class="pill-text">Advanced<br>Technology</span>
+              </div>
+
+              <!-- Center gap: leaves view clear for glowing tooth -->
+              <div class="center-gap" aria-hidden="true"></div>
+
+              <!-- Pill 3: Healthy Smiles -->
+              <div class="feature-pill">
+                <div class="pill-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                </div>
+                <span class="pill-text">Healthy<br>Smiles</span>
+              </div>
+
+              <!-- Pill 4: Confident You -->
+              <div class="feature-pill">
+                <div class="pill-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                  </svg>
+                </div>
+                <span class="pill-text">Confident<br>You</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom-Left CTA -->
+          <div class="hero-cta">
+            <p class="hero-subtitle">
+              Comprehensive dental<br>care for a healthier,<br>happier you.
+            </p>
+            <button class="cta-primary-btn" id="hero-cta-btn" onclick="document.getElementById('clinic-section').scrollIntoView({behavior: 'smooth'})">
+              Explore Clinical Suite <span class="arrow-icon" aria-hidden="true">↓</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Scroll prompt -->
+      <div class="scroll-prompt" id="hero-scroll-prompt">
+        <span class="scroll-mouse-icon">
+          <span class="scroll-wheel"></span>
+        </span>
+        <span class="scroll-prompt-text">Scroll to explore 3D sequence</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       SECTION 2: NEXT SECTION (CLINICAL SUITE SCROLL ANIMATION)
+       Sequence: ezgif-4a7fad58a20dd84f-jpg (276 frames)
+       ════════════════════════════════════════════════════════════════ -->
+  <section id="clinic-section" class="scroll-sequence-section" aria-label="Clinical Operatory Animation">
+    <div class="sticky-viewport">
+      <canvas id="clinic-canvas" class="sequence-canvas"></canvas>
+
+      <!-- Bridge bloom: soft light carried across the cinematic hand-off
+           from the hero environment into this one (opacity: script.js) -->
+      <div id="clinic-bloom" class="handoff-bloom" aria-hidden="true"></div>
+
+      <!-- Clinic Section Overlay UI (Directly inspired by Healthy Smile Infographic Clinic) -->
+      <div id="clinic-overlay" class="clinic-overlay-wrap">
+
+        <!-- Top Header Bar with Eyebrow & Status -->
+        <div class="clinic-top-bar">
+          <div class="section-tag">
+            <span class="tag-pulse"></span>
+            <span>DENTIVO CLINICAL SUITE</span>
+          </div>
+          <div class="clinic-status-pill">
+            <span class="suite-status-dot"></span>
+            <span>OPERATORY SUITE 01 • ACTIVE & STERILE</span>
+          </div>
+        </div>
+
+        <!-- Infographic Stage with Headline -->
+        <div class="clinic-infographic-stage">
+
+          <!-- Top-Right Headline (Healthy Smile Starts with Professional Care) -->
+          <div class="clinic-hero-headline" id="clinic-headline">
+            <h2 class="infographic-line-1">Healthy Smile</h2>
+            <div class="infographic-capsule-row">
+              <span class="starts-with-capsule">Starts with</span>
+            </div>
+            <h2 class="infographic-line-2">Professional Care</h2>
+            <p class="infographic-subtitle">For a Brighter, Healthier Smile</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Clinic → Services white bloom (opacity driven by script.js) -->
+    <div id="svc-bloom" class="services-bloom" aria-hidden="true"></div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       SECTION 3: DENTAL SERVICES (Phase 3; video backdrop in 13,
+       reworked into a single overlay panel in 14, new clip in 16)
+       The section is now its own panel in normal flow, directly after the
+       clinic: no pull-up, no lead-in, no overlap — the supplied clip is
+       the whole panel, edge to edge, and the heading, description and the
+       four service cards are an overlay on top of it rather than a block
+       sitting below it. The four cards appear one at a time, in order, as
+       the panel crosses the viewport (script.js, motion allowed only).
+       The Phase 6 tooth-drop timeline — pinned stage, artwork, water FX
+       and one-scene-at-a-time cross-fades — is gone; the four services,
+       their copy and their booking links are untouched. Content stays in
+       the DOM and readable without JS.
+       ════════════════════════════════════════════════════════════════ -->
+  <section id="services-section" aria-labelledby="services-heading">
+
+    <!-- ─── Section backdrop ──────────────────────────────────────────
+         The supplied clip, muted and looping, covers the whole section
+         edge to edge: object-fit: cover, centred, aspect ratio preserved
+         at every size. The Cloudinary master below is the one and only
+         video source for this section: the offline copy of the previous
+         clip was removed with it, so there is nothing stale left to play.
+         Nothing is painted over the footage either — no veil, no tint, no
+         filter — so it keeps its natural colour and brightness. The
+         poster sits underneath, so the surface is never empty: it is a
+         frame of this same clip and it shows while the video buffers, if
+         the file cannot play, and on its own under reduced motion, where
+         the stylesheet removes the video element. script.js starts
+         playback before the panel reaches the screen, so the first pixel
+         the visitor sees is already moving footage, not a still.
+         Decorative throughout: hidden from assistive tech, and
+         pointer-events: none so it can never take a click. -->
+    <div class="services-surface" aria-hidden="true">
+      <video class="services-footage" poster="services-backdrop-poster.jpg?v=2" muted loop playsinline autoplay preload="auto">
+        <source src="https://res.cloudinary.com/deoxcbs9b/video/upload/v1792440282/Dental_website_background_animation_20261020005844.mp4" type="video/mp4">
+      </video>
+    </div>
+
+    <!-- Foreground layer — heading, description, service grid -->
+    <div class="services-inner">
+
+      <!-- Section header — rises in once, when the header enters the viewport -->
+      <header class="services-header">
+        <p class="services-eyebrow services-anim">Our Specialties</p>
+        <h2 id="services-heading" class="services-title services-anim">Comprehensive Dental Services</h2>
+        <p class="services-desc services-anim">State-of-the-art dental care tailored for your comfort, confidence, and lifelong radiant health.</p>
+      </header>
+
+      <!-- One card per service, in the existing order. script.js reveals them
+           one at a time as the panel crosses the viewport (all visible without
+           JS or under reduced motion). -->
+      <div class="services-grid">
+
+        <article class="service-card">
+          <div class="service-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><rect x="2.2" y="9.6" width="19.6" height="2.4" rx="1.2"/><rect x="2.2" y="4.4" width="4.2" height="11" rx="1.6"/><rect x="7.4" y="3.6" width="4.2" height="12.6" rx="1.6"/><rect x="12.6" y="3.6" width="4.2" height="12.6" rx="1.6"/><rect x="17.8" y="4.4" width="4.2" height="11" rx="1.6"/><rect x="3.4" y="9.1" width="1.8" height="3.4" rx="0.7" fill="#ffffff"/><rect x="8.6" y="9.1" width="1.8" height="3.4" rx="0.7" fill="#ffffff"/><rect x="13.8" y="9.1" width="1.8" height="3.4" rx="0.7" fill="#ffffff"/><rect x="19" y="9.1" width="1.8" height="3.4" rx="0.7" fill="#ffffff"/></svg>
+          </div>
+          <h3 class="service-title">Orthodontic Braces</h3>
+          <p class="service-text">Correction of crooked teeth, bite issues, and alignment using aesthetic ceramic, metal, or clear aligners.</p>
+          <ul class="service-benefits" role="list">
+          <li>Custom Fits</li>
+          </ul>
+          <a class="service-link" href="#clinic-section" data-book-open>Book Treatment<span class="service-link-arrow" aria-hidden="true">&rarr;</span></a>
+        </article>
+
+        <article class="service-card">
+          <div class="service-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M12 2C9.5 2 7.7 3.6 6.8 5.6C5.9 4.7 4.6 4.3 3.7 5.1C2.5 6.2 2.9 8.3 3.7 10C4.6 11.8 5.4 13.6 5.4 16.3C5.4 17.7 5.9 19.1 7.2 19.7C8.1 20.1 9 19.3 9.5 18.4C9.9 17.6 10.4 16.7 12 16.7C13.6 16.7 14.1 17.6 14.5 18.4C15 19.3 15.9 20.1 16.8 19.7C18.1 19.1 18.6 17.7 18.6 16.3C18.6 13.6 19.4 11.8 20.3 10C21.1 8.3 21.5 6.2 20.3 5.1C19.4 4.3 18.1 4.7 17.2 5.6C16.3 3.6 14.5 2 12 2Z"/><path d="M20.6 2.4l.72 1.68 1.68.72-1.68.72-.72 1.68-.72-1.68-1.68-.72 1.68-.72.72-1.68z"/><path d="M21.1 16.9l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5.5-1.2z"/></svg>
+          </div>
+          <h3 class="service-title">Scaling &amp; Whitening</h3>
+          <p class="service-text">Removal of deep tartar, stains, and plaque buildup followed by fast laser whitening for a radiant smile.</p>
+          <ul class="service-benefits" role="list">
+          <li>Laser Enhanced</li>
+          </ul>
+          <a class="service-link" href="#clinic-section" data-book-open>Book Treatment<span class="service-link-arrow" aria-hidden="true">&rarr;</span></a>
+        </article>
+
+        <article class="service-card">
+          <div class="service-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M12 2C9.5 2 7.7 3.6 6.8 5.6C5.9 4.7 4.6 4.3 3.7 5.1C2.5 6.2 2.9 8.3 3.7 10C4.6 11.8 5.4 13.6 5.4 16.3C5.4 17.7 5.9 19.1 7.2 19.7C8.1 20.1 9 19.3 9.5 18.4C9.9 17.6 10.4 16.7 12 16.7C13.6 16.7 14.1 17.6 14.5 18.4C15 19.3 15.9 20.1 16.8 19.7C18.1 19.1 18.6 17.7 18.6 16.3C18.6 13.6 19.4 11.8 20.3 10C21.1 8.3 21.5 6.2 20.3 5.1C19.4 4.3 18.1 4.7 17.2 5.6C16.3 3.6 14.5 2 12 2Z"/><path d="M12 5.6v5" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round"/><path d="M12 9.8c-.15 1.6-1.3 2.4-1.9 4.4" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round"/><path d="M12 9.8c.15 1.6 1.3 2.4 1.9 4.4" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </div>
+          <h3 class="service-title">Root Canal Therapy</h3>
+          <p class="service-text">Save damaged or infected natural teeth with computerized, virtually pain-free root canal endodontics.</p>
+          <ul class="service-benefits" role="list">
+          <li>Painless Process</li>
+          </ul>
+          <a class="service-link" href="#clinic-section" data-book-open>Book Treatment<span class="service-link-arrow" aria-hidden="true">&rarr;</span></a>
+        </article>
+
+        <article class="service-card">
+          <div class="service-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M6 5.4C6 4.1 7.05 3 8.35 3h7.3C16.95 3 18 4.1 18 5.4c0 1.75-.85 3.3-2.2 4.25L12.7 12h-1.4l-3.1-2.35C6.85 8.7 6 7.15 6 5.4z"/><path d="M10.55 11.4h2.9l-.5 3.3h-1.9z"/><path d="M10.85 14.3h2.3l.18 1.85c.38 1.6.38 3.2-.15 4.8l-1.18 2.4-1.18-2.4c-.53-1.6-.53-3.2-.15-4.8z"/><path d="M11.35 17.1h1.3M11.4 18.9h1.2M11.45 20.7h1.1" fill="none" stroke="#ffffff" stroke-width="1.15" stroke-linecap="round"/></svg>
+          </div>
+          <h3 class="service-title">Dental Implants</h3>
+          <p class="service-text">Permanent titanium dental implants to restore missing teeth with natural look, strength, and durability.</p>
+          <ul class="service-benefits" role="list">
+          <li>Lifetime Solution</li>
+          </ul>
+          <a class="service-link" href="#clinic-section" data-book-open>Book Treatment<span class="service-link-arrow" aria-hidden="true">&rarr;</span></a>
+        </article>
+
+      </div>
+      <!-- /.services-grid -->
+    </div>
+    <!-- /.services-inner -->
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════
+  <!-- ================================================================
+       SECTION 4: MEET YOUR DENTIST (Phase 8 - cinematic glass stage)
+
+       Owner's reference reproduced in real markup: a dark cinematic
+       stage (light beams, fog, reflective floor) with two glowing
+       frosted-glass profile panes arranged as a two-stop 3D carousel.
+       One pane is dominant in the centre; the other waits behind it and
+       to the side, smaller, dimmer and turned a few degrees away. The
+       front pane flies in along Z as the section arrives and bursts into
+       smoke as it lands, the companion settles a beat later, and the
+       indicators below (or a click on the pane behind, a swipe, or the
+       arrow keys) bring the other doctor forward. Colours are this
+       site's own deep teal / aqua / mint - the reference's palette is not
+       copied literally.
+
+       Two doctors, exactly as supplied. The project holds no authentic
+       portrait of either doctor (the only faces in the assets are a
+       stock "National Dentist's Day" poster and a cartoon), so both
+       cards use the site's existing typographic monogram instead of
+       substituting an unrelated person. Nothing was invented.
+
+       Copy: the section heading is the owner's reference heading
+       ("Expert Care, Healthier Smiles"); every piece of real owner
+       content that used to live in the second card - the B.D.S
+       qualification, the Kohat City bio, the Sterilization First panel,
+       the wheelchair-accessibility chip and both tel: links - is
+       preserved verbatim inside the per-doctor profile dialogs, which
+       are native <dialog> elements (browser focus trap, ESC, backdrop)
+       and render inline when scripting is unavailable.
+
+       script.js: initDentistReveal() follows the initLocationReveal()
+       pattern - one-shot IntersectionObserver, .is-visible, then each
+       pane's landing settle + one-off smoke burst on transitionend, and
+       .is-settled once both have landed. It also wires the dialogs, the
+       carousel (indicators, click, swipe, arrow keys) with its small
+       smoke accent, and toggles .is-awake while the section is on screen,
+       which is what runs the continuous drifting plumes.
+       ================================================================ -->
+  <section id="dentist-section" aria-labelledby="dentist-heading">
+
+    <!-- Decorative stage: beams, fog volumes, vignette, reflective floor -->
+    <div class="dentist-stage" aria-hidden="true">
+      <i class="dentist-beam dentist-beam--a"></i>
+      <i class="dentist-beam dentist-beam--b"></i>
+      <i class="dentist-beam dentist-beam--c"></i>
+      <span class="dentist-fog dentist-fog--a"></span>
+      <span class="dentist-fog dentist-fog--b"></span>
+      <span class="dentist-pool"></span>
+    </div>
+
+    <div class="dentist-inner">
+
+      <!-- Section header -->
+      <header class="dentist-header">
+        <p class="dentist-eyebrow dentist-anim">Meet Your Dentist</p>
+        <h2 id="dentist-heading" class="dentist-title dentist-anim">Expert Care, <span class="dentist-title-accent">Healthier Smiles</span></h2>
+        <p class="dentist-intro dentist-anim">Our experienced and compassionate dentists are dedicated to providing personalized care for your oral health and a confident smile.</p>
+      </header>
+
+      <div class="dentist-carousel" data-dent-carousel>
+
+        <div class="dentist-track">
+
+          <!-- Dr. Syed Hashim Jamshed Bukhari - the dominant card on arrival -->
+          <article class="dentist-card is-active" data-dent-card="0" style="--d: 0ms" aria-labelledby="dentist-name-hashim">
+            <div class="dentist-smoke" aria-hidden="true"></div>
+            <div class="dentist-drift" aria-hidden="true"><i class="dentist-wisp"></i><i class="dentist-wisp"></i><i class="dentist-wisp"></i><i class="dentist-wisp"></i><i class="dentist-wisp"></i><i class="dentist-wisp"></i><i class="dentist-wisp"></i><i class="dentist-wisp"></i></div>
+
+            <div class="dentist-avatar" aria-hidden="true">SHB</div>
+
+            <h3 class="dentist-name" id="dentist-name-hashim">Dr. Syed Hashim Jamshed Bukhari</h3>
+            <p class="dentist-role">Chief Dental Surgeon</p>
+            <p class="dentist-credential">(Ex-MS LMH Kohat)</p>
+            <hr class="dentist-sep" />
+            <p class="dentist-desc">With extensive experience and a patient-first approach, Dr. Hashim provides advanced dental care with precision and compassion.</p>
+
+            <button class="dentist-view" type="button" data-dent-open="profile-hashim" aria-haspopup="dialog">
+              View Profile
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13"/><path d="M12.5 6l5.5 6-5.5 6"/></svg>
+            </button>
+          </article>
+
+          <!-- Dr. Aleena Khan - waits behind and to the side of the front card -->
+          <article class="dentist-card is-away" data-dent-card="1" style="--d: 140ms" aria-labelledby="dentist-name-aleena">
+            <div class="dentist-smoke" aria-hidden="true"></div>
+            <div class="dentist-drift" aria-hidden="true"><i class="dentist-wisp"></i><i class="dentist-wisp"></i><i class="dentist-wisp"></i><i class="dentist-wisp"></i><i class="dentist-wisp"></i><i class="dentist-wisp"></i><i class="dentist-wisp"></i><i class="dentist-wisp"></i></div>
+
+            <div class="dentist-avatar" aria-hidden="true">AK</div>
+
+            <h3 class="dentist-name" id="dentist-name-aleena">Dr. Aleena Khan</h3>
+            <p class="dentist-role">Dental Surgeon and Aesthetic Physician</p>
+            <hr class="dentist-sep" />
+            <p class="dentist-desc">Focused on gentle, modern dental care and aesthetic treatments for a healthier, more confident smile.</p>
+
+            <button class="dentist-view" type="button" data-dent-open="profile-aleena" aria-haspopup="dialog">
+              View Profile
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13"/><path d="M12.5 6l5.5 6-5.5 6"/></svg>
+            </button>
+          </article>
+
+        </div>
+
+        <!-- Carousel indicators: the lit pill marks the card in front -->
+        <div class="dentist-dots" role="group" aria-label="Choose which doctor profile stands in front">
+          <button class="dentist-dot is-on" type="button" data-dent-goto="0" aria-current="true" aria-label="Bring Dr. Syed Hashim Jamshed Bukhari to the front"></button>
+          <button class="dentist-dot" type="button" data-dent-goto="1" aria-current="false" aria-label="Bring Dr. Aleena Khan to the front"></button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Dr. Syed Hashim Jamshed Bukhari: full profile (owner copy preserved) -->
+    <dialog class="dentist-dialog" id="profile-hashim" aria-labelledby="profile-hashim-title">
+      <div class="dentist-dialog-body">
+        <button class="dentist-dialog-close" type="button" data-dent-close aria-label="Close profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>
+        </button>
+
+        <div class="dentist-avatar" aria-hidden="true">SHB</div>
+        <h3 class="dentist-name" id="profile-hashim-title">Dr. Syed Hashim Jamshed Bukhari</h3>
+        <p class="dentist-role">Chief Dental Surgeon</p>
+        <p class="dentist-credential">(Ex-MS LMH Kohat) &middot; B.D.S &middot; Dental Surgeon &amp; Orthodontist</p>
+        <hr class="dentist-sep" />
+        <p class="dentist-tagline">Dedicated to Gentle, High-Precision Family Dentistry</p>
+        <p class="dentist-bio">Dr. Syed Hashim Jamshed Bukhari provides state-of-the-art dental procedures using digital diagnostic scanners and hospital-grade sterilization. From emergency relief to full cosmetic smile redesigns, patient satisfaction remains our priority.</p>
+
+        <ul class="dentist-facts">
+          <li class="dentist-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="4" r="2"/><path d="M10 8v4h4.5l1.8 4.5"/><path d="M14.3 12.3A4.8 4.8 0 1 1 8 9.8"/><path d="M16.4 17h3.1"/></svg>
+            Wheelchair-accessible clinic
+          </li>
+          <li class="dentist-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s7-3.6 7-9V6l-7-3-7 3v6c0 5.4 7 9 7 9z"/><path d="M9 11.8l2.2 2.2 4.3-4.5"/></svg>
+            Expert Dental Solutions in Kohat City
+          </li>
+        </ul>
+
+        <div class="dentist-feature">
+          <span class="dentist-feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8.6 12.1l2.3 2.3 4.5-4.7" fill="none" stroke="#06281e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <div class="dentist-feature-body">
+            <h4 class="dentist-feature-title">Sterilization First</h4>
+            <p class="dentist-feature-text">Multi-stage autoclave sanitation for patient safety.</p>
+          </div>
+        </div>
+
+        <div class="dentist-dialog-actions">
+          <a class="dentist-cta" href="tel:+923348289596">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M6.6 3.5c.6 0 1.1.4 1.3 1l.9 2.7c.2.5 0 1.1-.4 1.4l-1.1.9a12.5 12.5 0 0 0 6.2 6.2l.9-1.1c.4-.4 1-.5 1.4-.3l2.7.9c.6.2 1 .7 1 1.3v2.6c0 .9-.8 1.7-1.7 1.6C10.7 21 3 13.3 2.5 5.2c-.1-.9.7-1.7 1.6-1.7h2.5z"/></svg>
+            Call to Book an Appointment
+          </a>
+          <a class="dentist-phone" href="tel:+923348289596">+92 334 8289596</a>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Dr. Aleena Khan: full profile (no credentials were supplied for her,
+         so none are shown - only her given designation and the clinic's
+         own shared facts) -->
+    <dialog class="dentist-dialog" id="profile-aleena" aria-labelledby="profile-aleena-title">
+      <div class="dentist-dialog-body">
+        <button class="dentist-dialog-close" type="button" data-dent-close aria-label="Close profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>
+        </button>
+
+        <div class="dentist-avatar" aria-hidden="true">AK</div>
+        <h3 class="dentist-name" id="profile-aleena-title">Dr. Aleena Khan</h3>
+        <p class="dentist-role">Dental Surgeon and Aesthetic Physician</p>
+        <hr class="dentist-sep" />
+        <p class="dentist-bio">Dr. Aleena Khan focuses on gentle, modern dental care and aesthetic treatments, for a healthier, more confident smile.</p>
+
+        <ul class="dentist-facts">
+          <li class="dentist-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="4" r="2"/><path d="M10 8v4h4.5l1.8 4.5"/><path d="M14.3 12.3A4.8 4.8 0 1 1 8 9.8"/><path d="M16.4 17h3.1"/></svg>
+            Wheelchair-accessible clinic
+          </li>
+        </ul>
+
+        <div class="dentist-feature">
+          <span class="dentist-feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8.6 12.1l2.3 2.3 4.5-4.7" fill="none" stroke="#06281e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <div class="dentist-feature-body">
+            <h4 class="dentist-feature-title">Sterilization First</h4>
+            <p class="dentist-feature-text">Multi-stage autoclave sanitation for patient safety.</p>
+          </div>
+        </div>
+
+        <div class="dentist-dialog-actions">
+          <a class="dentist-cta" href="tel:+923348289596">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M6.6 3.5c.6 0 1.1.4 1.3 1l.9 2.7c.2.5 0 1.1-.4 1.4l-1.1.9a12.5 12.5 0 0 0 6.2 6.2l.9-1.1c.4-.4 1-.5 1.4-.3l2.7.9c.6.2 1 .7 1 1.3v2.6c0 .9-.8 1.7-1.7 1.6C10.7 21 3 13.3 2.5 5.2c-.1-.9.7-1.7 1.6-1.7h2.5z"/></svg>
+            Call to Book an Appointment
+          </a>
+          <a class="dentist-phone" href="tel:+923348289596">+92 334 8289596</a>
+        </div>
+      </div>
+    </dialog>
+  </section>
+
+
+  <!-- ════════════════════════════════════════════════════════════════
+       SECTION 5: VISIT OUR CLINIC
+       The light counterpoint to the two teal glass stages above it: soft
+       ivory ground, one solid white panel, navy type and a single teal
+       accent colour. No glass, no translucency, no glow. The one-shot
+       entrance is driven by script.js (js-anim gated) and everything
+       renders, complete and readable, without JS.
+       ════════════════════════════════════════════════════════════════ -->
+  <section id="location-section" aria-labelledby="location-heading">
+    <div class="location-inner">
+
+      <!-- Left: clinic information panel -->
+      <div class="location-card location-anim" style="--d: 0ms">
+        <p class="location-eyebrow">Location &amp; Hours</p>
+        <h2 id="location-heading" class="location-title">Visit Our Clinic</h2>
+
+        <div class="location-info">
+
+          <div class="location-row">
+            <span class="location-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 21s6.5-5.2 6.5-10.4A6.5 6.5 0 0 0 5.5 10.6C5.5 15.8 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.4"/></svg>
+            </span>
+            <div class="location-row-body">
+              <p class="location-row-label">Clinic Address</p>
+              <p class="location-row-value">Al Mansoor Plaza, Opposite KDA Gate 2, Jungle Khel, Kohat, Khyber Pakhtunkhwa.</p>
+            </div>
+          </div>
+
+          <div class="location-row">
+            <span class="location-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" focusable="false"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.2V12l3.4 2"/></svg>
+            </span>
+            <div class="location-row-body">
+              <p class="location-row-label">Working Hours</p>
+              <dl class="location-hours">
+                <div class="location-hours-row"><dt>Monday</dt><dd>2 PM &ndash; 11 PM</dd></div>
+                <div class="location-hours-row"><dt>Tuesday</dt><dd>2 PM &ndash; 11 PM</dd></div>
+                <div class="location-hours-row"><dt>Wednesday</dt><dd>2 PM &ndash; 11 PM</dd></div>
+                <div class="location-hours-row"><dt>Thursday</dt><dd><span class="location-hours-accent">3 PM</span> &ndash; 11 PM</dd></div>
+                <div class="location-hours-row"><dt>Friday</dt><dd>2 PM &ndash; 11 PM</dd></div>
+                <div class="location-hours-row"><dt>Saturday</dt><dd><span class="location-hours-accent">9 AM</span> &ndash; 11 PM</dd></div>
+                <div class="location-hours-row"><dt>Sunday</dt><dd>2 PM &ndash; 11 PM</dd></div>
+              </dl>
+              <p class="location-row-note">Open 7 days a week &middot; continuous emergency assistance</p>
+            </div>
+          </div>
+
+          <div class="location-row">
+            <span class="location-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M8.2 3.6H7.4A2.7 2.7 0 0 0 4.7 6.4c.5 6.6 6.3 12.4 12.9 12.9a2.7 2.7 0 0 0 2.8-2.7v-.9a1.8 1.8 0 0 0-1.4-1.8l-2.3-.5a1.8 1.8 0 0 0-1.7.6l-.6.7a12.6 12.6 0 0 1-5-5l.7-.6a1.8 1.8 0 0 0 .6-1.7l-.5-2.3a1.8 1.8 0 0 0-1.8-1.5z"/></svg>
+            </span>
+            <div class="location-row-body">
+              <p class="location-row-label">Direct Phone</p>
+              <p><a class="location-phone" href="tel:+923348289596">+92 334 8289596</a></p>
+            </div>
+          </div>
+
+        </div>
+
+        <a class="directions-btn" href="https://maps.google.com/?q=Dr.+Syed+Hashim+Jamshed+Bukhari+Dental+Clinic+Kohat" target="_blank" rel="noopener noreferrer">
+          <svg class="directions-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4.5"/></svg>
+          Get Directions on Google Maps
+        </a>
+      </div>
+
+      <!-- Right: embedded Google Map -->
+      <figure class="location-map location-anim" style="--d: 120ms">
+        <div class="location-map-frame">
+          <iframe
+            src="https://www.google.com/maps?q=Dr.%20Syed%20Hashim%20Jamshed%20Bukhari%20Dental%20Clinic%2C%20Al%20Mansoor%20Plaza%2C%20opposite%20to%20KDA%20Gate%202%2C%20Jungle%20Khel%2C%20Kohat%20Development%20Authority%20(KDA)%2C%20Kohat%2C%2026000&amp;output=embed"
+            title="Google Map showing Dr. Syed Hashim Jamshed Bukhari Dental Clinic, Al Mansoor Plaza, opposite KDA Gate 2, Jungle Khel, Kohat"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            allowfullscreen></iframe>
+        </div>
+        <figcaption class="location-map-caption">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s6.5-5.2 6.5-10.4A6.5 6.5 0 0 0 5.5 10.6C5.5 15.8 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.4"/></svg>
+          <span>Dr. Syed Hashim Jamshed Bukhari Dental Clinic &mdash; Al Mansoor Plaza, opposite to KDA Gate 2, Jungle Khel, Kohat Development Authority (KDA), Kohat, 26000.</span>
+        </figcaption>
+      </figure>
+
+    </div>
+
+    <!-- ══ Booking dialog ══════════════════════════════════════════════
+         One booking surface for the whole page: the navbar's "Book Visit"
+         CTA and each service card's "Book Treatment" link open it. A native
+         <dialog>, so the browser supplies the top layer, the focus trap, the
+         ESC key, focus restore and inertness — there is no second modal
+         implementation on the page (the two doctor profiles are the only
+         other dialogs, and they use the same pattern).
+
+         Styling deliberately takes after *this* section, not the two teal
+         glass stages above it: solid white panel, navy type, teal accent,
+         hairline borders, restrained shadow. No glass, no translucency, no
+         glow, no gradient — the one ornament is the same solid teal rule
+         that sits on the top edge of the clinic card. It also inherits the
+         section's own --loc-* tokens, so the two surfaces can never drift
+         apart.
+
+         Without JS the dialog simply stays closed (the UA hides a <dialog>
+         with no `open`), and the clinic's existing call links remain the
+         no-JS way to book.                                -->
+    <dialog class="appointment-dialog" id="appointment-dialog" aria-labelledby="appointment-title">
+      <button class="appointment-close" type="button" data-appt-close aria-label="Close booking form">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>
+      </button>
+
+      <div class="appointment-body">
+        <header class="appointment-head">
+          <h2 class="appointment-title" id="appointment-title">Book Appointment</h2>
+          <p class="appointment-sub">Dr. Syed Hashim Jamshed Bukhari Dental Clinic &middot; Kohat</p>
+        </header>
+
+        <form class="appointment-form" id="appointment-form" novalidate>
+          <div class="appointment-field">
+            <label class="appointment-label" for="appt-name">Patient Name</label>
+            <input class="appointment-input" id="appt-name" name="name" type="text" placeholder="e.g. Muhammad Ali" autocomplete="name" autofocus required aria-describedby="appt-name-error" />
+            <p class="appointment-error" id="appt-name-error" role="alert" hidden></p>
+          </div>
+
+          <div class="appointment-field">
+            <label class="appointment-label" for="appt-phone">Phone Number</label>
+            <input class="appointment-input" id="appt-phone" name="phone" type="tel" inputmode="tel" placeholder="e.g. 0334 1234567" autocomplete="tel" required aria-describedby="appt-phone-error" />
+            <p class="appointment-error" id="appt-phone-error" role="alert" hidden></p>
+          </div>
+
+          <div class="appointment-field">
+            <label class="appointment-label" for="appt-procedure">Select Procedure</label>
+            <div class="appointment-select-wrap">
+              <select class="appointment-input appointment-select" id="appt-procedure" name="procedure" required aria-describedby="appt-procedure-error">
+                <option value="" disabled selected>Select a procedure&hellip;</option>
+                <option>Orthodontic Braces</option>
+                <option>Scaling &amp; Whitening</option>
+                <option>Root Canal Therapy</option>
+                <option>Dental Implants</option>
+              </select>
+              <span class="appointment-select-chevron" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6 9.5l6 6 6-6"/></svg>
+              </span>
+            </div>
+            <p class="appointment-error" id="appt-procedure-error" role="alert" hidden></p>
+          </div>
+
+          <button class="appointment-submit" type="submit" id="appt-submit">
+            <span class="appointment-spinner" aria-hidden="true"></span>
+            <span class="appointment-submit-text">Confirm &amp; Redirect to WhatsApp</span>
+          </button>
+
+          <p class="appointment-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 11.5c0 4.1-3.8 7.4-8.5 7.4-1 0-2-.15-2.9-.43L4.5 20l1.2-3.3a7 7 0 0 1-2.2-5.2C3.5 7.4 7.3 4.1 12 4.1s8.5 3.3 8.5 7.4z"/></svg>
+            <span>Opens WhatsApp with these details filled in.</span>
+          </p>
+        </form>
+      </div>
+    </dialog>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       FOOTER
+       Third and last step of the page's colour progression: teal glass
+       stages (services, dentist) -> warm ivory (location) -> solid
+       midnight navy. No glass, no translucency, no glow; flat navy,
+       white type and a single lightly-tinted teal accent for links and
+       icons so everything still clears AA on the dark ground.
+       ════════════════════════════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-grid">
+
+        <!-- Column 1: the clinic -->
+        <div class="site-footer-brand">
+          <p class="site-footer-logo">
+            <span class="site-footer-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M12 2C9.5 2 7.7 3.6 6.8 5.6C5.9 4.7 4.6 4.3 3.7 5.1C2.5 6.2 2.9 8.3 3.7 10C4.6 11.8 5.4 13.6 5.4 16.3C5.4 17.7 5.9 19.1 7.2 19.7C8.1 20.1 9 19.3 9.5 18.4C9.9 17.6 10.4 16.7 12 16.7C13.6 16.7 14.1 17.6 14.5 18.4C15 19.3 15.9 20.1 16.8 19.7C18.1 19.1 18.6 17.7 18.6 16.3C18.6 13.6 19.4 11.8 20.3 10C21.1 8.3 21.5 6.2 20.3 5.1C19.4 4.3 18.1 4.7 17.2 5.6C16.3 3.6 14.5 2 12 2Z"/></svg>
+            </span>
+            <span class="site-footer-brand-text">
+              <span class="site-footer-name">Dr. Syed Hashim Jamshed</span>
+              <span class="site-footer-sub">Bukhari Dental Clinic &middot; Kohat</span>
+            </span>
+          </p>
+          <p class="site-footer-desc">Your trusted partner for modern dental care, healthy smiles, and confident living.</p>
+          <!-- No social row: the clinic has no verified public account URLs, and
+               inventing them would ship dead links. -->
+        </div>
+
+        <!-- Column 2: in-page navigation (the same anchors the navbar uses) -->
+        <nav class="site-footer-col" aria-labelledby="footer-quick-links">
+          <h3 class="site-footer-heading" id="footer-quick-links">Quick Links</h3>
+          <ul class="site-footer-list" role="list">
+            <li><a href="#hero-section">Home</a></li>
+            <li><a href="#clinic-section">About Us</a></li>
+            <li><a href="#services-section">Services</a></li>
+            <li><a href="#dentist-section">Meet Your Dentist</a></li>
+            <li><a href="#location-section">Contact Us</a></li>
+          </ul>
+        </nav>
+
+        <!-- Column 3: exactly the four services the page actually presents -->
+        <nav class="site-footer-col" aria-labelledby="footer-services">
+          <h3 class="site-footer-heading" id="footer-services">Dental Services</h3>
+          <ul class="site-footer-list" role="list">
+            <li><a href="#services-section">Orthodontic Braces</a></li>
+            <li><a href="#services-section">Scaling &amp; Whitening</a></li>
+            <li><a href="#services-section">Root Canal Therapy</a></li>
+            <li><a href="#services-section">Dental Implants</a></li>
+          </ul>
+        </nav>
+
+        <!-- Column 4: the verified clinic details -->
+        <div class="site-footer-col site-footer-contact-col">
+          <h3 class="site-footer-heading">Contact Information</h3>
+          <ul class="site-footer-contact" role="list">
+            <li>
+              <svg class="site-footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s6.5-5.2 6.5-10.4A6.5 6.5 0 0 0 5.5 10.6C5.5 15.8 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.4"/></svg>
+              <span>Al Mansoor Plaza, Opposite KDA Gate 2, Jungle Khel, Kohat, Khyber Pakhtunkhwa.</span>
+            </li>
+            <li>
+              <svg class="site-footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8.2 3.6H7.4A2.7 2.7 0 0 0 4.7 6.4c.5 6.6 6.3 12.4 12.9 12.9a2.7 2.7 0 0 0 2.8-2.7v-.9a1.8 1.8 0 0 0-1.4-1.8l-2.3-.5a1.8 1.8 0 0 0-1.7.6l-.6.7a12.6 12.6 0 0 1-5-5l.7-.6a1.8 1.8 0 0 0 .6-1.7l-.5-2.3a1.8 1.8 0 0 0-1.8-1.5z"/></svg>
+              <a href="tel:+923348289596">+92 334 8289596</a>
+            </li>
+            <li>
+              <svg class="site-footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.2V12l3.4 2"/></svg>
+              <span>Open 7 days a week<br><span class="site-footer-when">Mon&ndash;Fri &amp; Sun 2 PM &ndash; 11 PM &middot; Sat 9 AM &ndash; 11 PM</span></span>
+            </li>
+            <li>
+              <svg class="site-footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4.5"/></svg>
+              <a href="https://maps.google.com/?q=Dr.+Syed+Hashim+Jamshed+Bukhari+Dental+Clinic+Kohat" target="_blank" rel="noopener noreferrer">Get Directions</a>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="site-footer-bottom">
+        <p>&copy; <span class="site-footer-year" data-year>2026</span> Dr. Syed Hashim Jamshed Bukhari Dental Clinic &mdash; Kohat, Khyber Pakhtunkhwa. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js?v=51"></script>
+</body>
+
+</html>

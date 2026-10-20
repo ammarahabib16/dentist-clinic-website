@@ -1,0 +1,4268 @@
+/* ════════════════════════════════════════════════════════════════
+   Dentivo — Global Reset & Base
+   ════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  /* The scrollbar is already permanent (overflow-y: scroll), so reserving its
+     gutter changes nothing visually here — it just means the booking dialog can
+     lock the page (overflow: hidden) without the layout shifting by the
+     scrollbar width while it is open. */
+  scrollbar-gutter: stable;
+  background-color: #071913;
+  scroll-behavior: smooth;
+}
+
+body {
+  width: 100%;
+  min-height: 100%;
+  background-color: #071913;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #ffffff;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Global Sticky Navbar
+   ════════════════════════════════════════════════════════════════ */
+#navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(18px, 2.5vh, 26px) clamp(32px, 5vw, 68px);
+  background: linear-gradient(
+    to bottom,
+    rgba(6, 22, 17, 0.75) 0%,
+    rgba(6, 22, 17, 0.2) 65%,
+    transparent 100%
+  );
+  transition: padding 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease, border-bottom 0.3s ease;
+}
+
+#navbar.nav-scrolled {
+  background: rgba(7, 25, 19, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.45);
+  padding: 14px clamp(32px, 5vw, 68px);
+}
+
+/* Logo */
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  user-select: none;
+  cursor: pointer;
+}
+
+.logo-tooth {
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+}
+
+/* Nav links */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 2.8vw, 42px);
+  list-style: none;
+}
+
+.nav-links a {
+  color: rgba(255, 255, 255, 0.84);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: color 0.2s ease;
+}
+
+.nav-links a:hover {
+  color: #4adeb0;
+}
+
+/* Navbar CTA button */
+.nav-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  color: #0b3427;
+  border: none;
+  border-radius: 9999px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  /* it is an <a> so that it still leads somewhere without JS */
+  text-decoration: none;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.16);
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-cta-btn:hover {
+  background: #f0fdf9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.24);
+}
+
+.nav-cta-btn .arrow-icon {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.nav-cta-btn:hover .arrow-icon {
+  transform: translateX(2px);
+}
+
+/* Navbar brand text (clinic name + subtitle) */
+.nav-brand {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.nav-clinic-name {
+  font-size: clamp(15px, 1.35vw, 19px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.nav-clinic-sub {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: clamp(7.5px, 0.62vw, 9.5px);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+}
+
+/* Right-side actions (phone pill + CTA) */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.nav-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 9999px;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.nav-phone:hover {
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nav-phone:focus-visible {
+  border-radius: 9999px;
+  outline: 3px solid rgba(74, 222, 176, 0.6);
+  outline-offset: 2px;
+}
+
+.nav-phone svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.nav-cta-btn .cal-icon {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+/* Navbar responsive refinements (links already hide at ≤960px below) */
+@media (max-width: 640px) {
+  .nav-phone {
+    display: none;
+  }
+
+  .nav-actions {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  #navbar,
+  #navbar.nav-scrolled {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .nav-clinic-sub {
+    display: none;
+  }
+
+  .nav-clinic-name {
+    font-size: 14px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Dual Scroll Sequence Architecture (Sticky Viewports)
+   ════════════════════════════════════════════════════════════════ */
+.scroll-sequence-section {
+  position: relative;
+  width: 100%;
+  height: 520vh; /* gives comfortable scrubbing pace per sequence */
+}
+
+/* ─── Cinematic Bridge Between The Two Sequences ──────────────────────────
+   Both sequences are halves of one camera journey that meet on the
+   "hand-held tooth" beat. The hero section gains +100vh of hold past its
+   scrub range, and the clinic section is pulled up −200vh so that its
+   sticky viewport pins exactly while the hero viewport is still pinned.
+   For that overlapping 100vh both environments share the screen and
+   script.js cross-dissolves a matched dolly between them (hero dolly-in →
+   clinic settle). Total page height and each sequence's scrub pacing are
+   unchanged, and every bridge value is scroll-derived → reversible. */
+#hero-section {
+  height: 620vh;
+}
+
+#clinic-section {
+  height: 620vh;
+  margin-top: -200vh;
+  z-index: 2; /* clinic environment composites above the pinned hero */
+}
+
+.sticky-viewport {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #071913;
+}
+
+.sequence-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 1;
+  /* Pivot the bridge dolly on the shared subject (the tooth sits near
+     50% / 45% of frame in both boundary shots). */
+  transform-origin: 50% 45%;
+  will-change: transform;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SECTION 1: HERO OVERLAY STYLES
+   ════════════════════════════════════════════════════════════════ */
+.hero-overlay-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+}
+
+#hero-content {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 92px clamp(32px, 5vw, 68px) 0;
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  will-change: opacity, transform;
+}
+
+/* Centered Title */
+.hero-heading {
+  text-align: center;
+  margin: 0 auto;
+  padding-top: clamp(8px, 1.5vh, 24px);
+  max-width: 900px;
+  pointer-events: auto;
+}
+
+.hero-heading h1 {
+  font-size: clamp(48px, 5.6vw, 84px);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  color: #ffffff;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.45);
+}
+
+.title-line {
+  display: block;
+}
+
+.text-accent {
+  background: linear-gradient(180deg, #bbf7d0 0%, #4adeb0 55%, #2dd4bf 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 35px rgba(74, 222, 176, 0.5));
+}
+
+/* Middle Pills */
+.features-zone {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 51%;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.pills-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 1.3vw, 18px);
+  padding: 0 20px;
+}
+
+.center-gap {
+  width: clamp(160px, 18vw, 240px);
+  flex-shrink: 0;
+}
+
+.feature-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(8, 30, 23, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  padding: 7px 22px 7px 7px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  pointer-events: auto;
+  cursor: default;
+  transition: transform 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  user-select: none;
+}
+
+.feature-pill:hover {
+  transform: translateY(-2px);
+  background: rgba(12, 44, 34, 0.85);
+  border-color: rgba(94, 234, 212, 0.45);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 20px rgba(94, 234, 212, 0.22);
+}
+
+.pill-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #7cecc9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0a3427;
+  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(124, 236, 201, 0.35);
+}
+
+.pill-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.pill-text {
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* Bottom CTA */
+.hero-cta {
+  position: absolute;
+  left: clamp(32px, 5vw, 68px);
+  bottom: clamp(32px, 5vh, 56px);
+  max-width: 380px;
+  pointer-events: auto;
+}
+
+.hero-subtitle {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: clamp(16px, 1.25vw, 18.5px);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  margin-bottom: 22px;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+}
+
+.cta-primary-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #5ef0c0;
+  background: linear-gradient(135deg, #74fad0 0%, #46e3b0 100%);
+  color: #06281e;
+  border: none;
+  border-radius: 9999px;
+  padding: 15px 30px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  box-shadow: 0 0 35px rgba(94, 240, 192, 0.55), 0 8px 24px rgba(0, 0, 0, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.25s ease, filter 0.2s ease;
+  white-space: nowrap;
+}
+
+.cta-primary-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 0 45px rgba(94, 240, 192, 0.75), 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.cta-primary-btn .arrow-icon {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.cta-primary-btn:hover .arrow-icon {
+  transform: translateX(3px);
+}
+
+/* Floating Scroll Prompt */
+.scroll-prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(7, 25, 19, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(74, 222, 176, 0.35);
+  border-radius: 9999px;
+  padding: 8px 20px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.scroll-mouse-icon {
+  width: 16px;
+  height: 24px;
+  border: 1.8px solid #4adeb0;
+  border-radius: 9999px;
+  display: flex;
+  justify-content: center;
+  padding-top: 3px;
+}
+
+.scroll-wheel {
+  width: 3px;
+  height: 6px;
+  background: #4adeb0;
+  border-radius: 2px;
+  animation: mouseWheelMove 1.6s infinite ease-in-out;
+}
+
+@keyframes mouseWheelMove {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(7px); opacity: 0; }
+}
+
+.scroll-prompt-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SECTION 2: CLINIC SCROLL OVERLAY (ezgif-4a7fad58a20dd84f-jpg)
+   Design Inspiration: Healthy Smile Infographic Clinic
+   ════════════════════════════════════════════════════════════════ */
+/* ─── Bridge Bloom: soft light carried across the match-cut ────────────────
+   Opacity is driven by script.js (peaks at the dissolve midpoint, where the
+   bare hand of the hero morphs into the gloved hands of the clinic shot). */
+.handoff-bloom {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse 62% 58% at 50% 45%,
+    rgba(228, 255, 244, 0.85) 0%,
+    rgba(150, 240, 205, 0.45) 38%,
+    rgba(74, 222, 176, 0.12) 62%,
+    transparent 78%
+  );
+}
+
+.clinic-overlay-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(20px, 3vh, 36px) clamp(24px, 4vw, 64px);
+  box-sizing: border-box;
+}
+
+/* Top bar with eyebrow and live status */
+.clinic-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  pointer-events: auto;
+  padding-top: 64px; /* clear the sticky navbar */
+  z-index: 20;
+}
+
+.section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(7, 28, 20, 0.9);
+  border: 1px solid rgba(74, 222, 176, 0.4);
+  border-radius: 9999px;
+  padding: 7px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4adeb0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
+.tag-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4adeb0;
+  box-shadow: 0 0 10px #4adeb0;
+  animation: pulseTag 2s infinite ease-in-out;
+}
+
+@keyframes pulseTag {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+
+.clinic-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(6, 22, 17, 0.9);
+  border: 1px solid rgba(74, 222, 176, 0.35);
+  border-radius: 9999px;
+  padding: 7px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #a7f3d0;
+  letter-spacing: 0.06em;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
+.suite-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4adeb0;
+  box-shadow: 0 0 10px #4adeb0;
+}
+
+/* Infographic Stage covering the whole viewport */
+.clinic-infographic-stage {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ─── Top-Right Headline (Matches Inspiration) ─── */
+.clinic-hero-headline {
+  position: absolute;
+  top: 4%;
+  right: 2%;
+  text-align: right;
+  pointer-events: auto;
+  max-width: 620px;
+  z-index: 15;
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+  will-change: opacity, transform;
+}
+
+.infographic-line-1,
+.infographic-line-2 {
+  font-size: clamp(34px, 4.4vw, 68px);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  text-shadow: 0 4px 28px rgba(0, 0, 0, 0.75), 0 2px 8px rgba(0, 0, 0, 0.9);
+  margin: 0;
+}
+
+.infographic-capsule-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 8px 0;
+}
+
+.starts-with-capsule {
+  display: inline-block;
+  background: #0d5c40;
+  color: #ffffff;
+  font-size: clamp(19px, 2.3vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  padding: 6px 26px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.25);
+  border: 1.5px solid rgba(74, 222, 176, 0.45);
+}
+
+.infographic-subtitle {
+  font-size: clamp(16px, 1.8vw, 24px);
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin-top: 10px;
+  text-shadow: 0 3px 16px rgba(0, 0, 0, 0.85);
+}
+
+/* ─── Responsive Media Queries for Clinic Section ─── */
+@media (max-width: 1024px) {
+  .clinic-overlay-wrap {
+    padding: 20px 24px;
+  }
+  .clinic-hero-headline {
+    right: 1%;
+    top: 2%;
+    max-width: 480px;
+  }
+}
+
+@media (max-width: 768px) {
+  .clinic-top-bar {
+    padding-top: 52px;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+  .clinic-hero-headline {
+    position: static;
+    margin: 20px auto 0;
+    text-align: center;
+    max-width: 100%;
+  }
+  .infographic-capsule-row {
+    justify-content: center;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SECTION 3: DETAILED CLINICAL PILLARS, METRICS & BOOKING
+   ════════════════════════════════════════════════════════════════ */
+.details-section {
+  position: relative;
+  z-index: 30;
+  background-color: #071913;
+  width: 100%;
+  min-height: 100vh;
+  padding: clamp(90px, 12vh, 150px) 0 0;
+  overflow: hidden;
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.65);
+}
+
+/* Ambient glow effects */
+.ambient-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(100px);
+  z-index: 0;
+}
+
+.ambient-glow-1 {
+  top: 8%;
+  right: -5%;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, rgba(74, 222, 176, 0.12) 0%, transparent 70%);
+}
+
+.ambient-glow-2 {
+  top: 45%;
+  left: -8%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.08) 0%, transparent 70%);
+}
+
+.details-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 clamp(24px, 4.5vw, 64px);
+}
+
+.details-header {
+  text-align: center;
+  max-width: 820px;
+  margin: 0 auto clamp(40px, 6vh, 64px);
+}
+
+.details-title {
+  font-size: clamp(34px, 4.2vw, 56px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
+
+.details-subtitle {
+  font-size: clamp(15.5px, 1.25vw, 18px);
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.6;
+}
+
+/* 2-Column Showcase Grid */
+.showcase-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(28px, 4vw, 52px);
+  align-items: start;
+}
+
+/* Column 1: Infographic Image Showcase with Hotspots */
+.infographic-showcase-card {
+  background: rgba(11, 38, 29, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  padding: 22px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.infographic-showcase-card:hover {
+  border-color: rgba(74, 222, 176, 0.35);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55), 0 0 30px rgba(74, 222, 176, 0.12);
+}
+
+.showcase-top-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(6, 22, 17, 0.85);
+  border: 1px solid rgba(74, 222, 176, 0.3);
+  border-radius: 9999px;
+  padding: 6px 15px;
+  margin-bottom: 16px;
+}
+
+.suite-status-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #7cecc9;
+  letter-spacing: 0.06em;
+}
+
+.showcase-visual-wrapper {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #000;
+}
+
+.infographic-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.infographic-showcase-card:hover .infographic-img {
+  transform: scale(1.02);
+}
+
+/* Hotspots on the Infographic Image */
+.hotspot {
+  position: absolute;
+  cursor: pointer;
+  z-index: 10;
+  outline: none;
+}
+
+.hotspot-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(74, 222, 176, 0.35);
+  animation: hotspotRipple 2s infinite ease-out;
+  pointer-events: none;
+}
+
+@keyframes hotspotRipple {
+  0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+
+.hotspot-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(7, 25, 19, 0.88);
+  border: 1px solid rgba(74, 222, 176, 0.5);
+  border-radius: 9999px;
+  padding: 6px 14px;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.hotspot:hover .hotspot-tag,
+.hotspot:focus .hotspot-tag {
+  transform: scale(1.06);
+  background: rgba(11, 38, 29, 0.95);
+  border-color: #4adeb0;
+  box-shadow: 0 6px 20px rgba(74, 222, 176, 0.35);
+}
+
+.hotspot-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7cecc9;
+  box-shadow: 0 0 8px #7cecc9;
+  flex-shrink: 0;
+}
+
+.hotspot-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translateX(-50%) translateY(6px);
+  width: 240px;
+  background: rgba(6, 22, 17, 0.95);
+  border: 1px solid rgba(74, 222, 176, 0.4);
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 20;
+}
+
+.hotspot:hover .hotspot-tooltip,
+.hotspot:focus .hotspot-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.hotspot-tooltip strong {
+  display: block;
+  font-size: 13px;
+  color: #4adeb0;
+  margin-bottom: 4px;
+}
+
+.hotspot-tooltip p {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.hotspot-clean {
+  top: 55%;
+  left: 45%;
+}
+
+.hotspot-protect {
+  top: 51%;
+  right: 5%;
+}
+
+.hotspot-healthy {
+  top: 77%;
+  left: 41%;
+}
+
+.showcase-footer-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 4px 6px;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.meta-ico {
+  font-size: 15px;
+}
+
+/* Column 2: 3 Detailed Clinical Pillars */
+.pillars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pillar-box {
+  background: rgba(11, 38, 29, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  padding: clamp(20px, 2.4vw, 26px);
+  transition: transform 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.pillar-box:hover {
+  transform: translateY(-3px);
+  background: rgba(14, 46, 36, 0.65);
+  border-color: rgba(74, 222, 176, 0.38);
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.35), 0 0 25px rgba(74, 222, 176, 0.12);
+}
+
+.pillar-box-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.pillar-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(74, 222, 176, 0.14);
+  border: 1px solid rgba(74, 222, 176, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4adeb0;
+  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(74, 222, 176, 0.2);
+}
+
+.pillar-icon-wrap svg {
+  width: 24px;
+  height: 24px;
+}
+
+.pillar-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4adeb0;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.pillar-heading {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.pillar-body {
+  font-size: 14.5px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.55;
+  margin-bottom: 14px;
+}
+
+.pillar-perks {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.perk-check {
+  color: #4adeb0;
+  font-weight: 800;
+  margin-right: 6px;
+}
+
+/* Metrics Bar */
+.metrics-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: rgba(11, 38, 29, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: clamp(24px, 3vh, 34px) clamp(20px, 3vw, 40px);
+  margin-top: clamp(48px, 6vh, 68px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
+.metric-item {
+  text-align: center;
+  flex: 1;
+}
+
+.metric-value {
+  font-size: clamp(32px, 3.8vw, 48px);
+  font-weight: 800;
+  color: #4adeb0;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 6px;
+  text-shadow: 0 0 25px rgba(74, 222, 176, 0.35);
+}
+
+.metric-label {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.metric-divider {
+  width: 1px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Booking Banner */
+.booking-banner {
+  background: linear-gradient(135deg, rgba(14, 48, 38, 0.85) 0%, rgba(9, 32, 25, 0.95) 100%);
+  border: 1px solid rgba(74, 222, 176, 0.32);
+  border-radius: 28px;
+  padding: clamp(32px, 4vw, 48px);
+  margin-top: clamp(48px, 6vh, 64px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.banner-content {
+  max-width: 620px;
+}
+
+.banner-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7cecc9;
+  letter-spacing: 0.08em;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.banner-title {
+  font-size: clamp(24px, 2.6vw, 36px);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+  line-height: 1.15;
+}
+
+.banner-text {
+  font-size: 14.5px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.5;
+}
+
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.banner-call-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14.5px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.banner-call-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Footer */
+.dentivo-footer {
+  margin-top: clamp(80px, 10vh, 120px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 56px 0 36px;
+  background: rgba(5, 18, 14, 0.95);
+}
+
+.footer-container {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 clamp(24px, 4.5vw, 64px);
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.footer-tagline {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.footer-links-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(20px, 3vw, 36px);
+}
+
+.footer-links-group a {
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.footer-links-group a:hover {
+  color: #4adeb0;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 24px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Sleek Minimalist Scrollbar
+   ════════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #071913;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(74, 222, 176, 0.35);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 222, 176, 0.65);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Responsive Adjustments
+   ════════════════════════════════════════════════════════════════ */
+@media (max-width: 1080px) {
+  .showcase-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .clinic-badges-row {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .booking-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .banner-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 960px) {
+  .nav-links {
+    display: none;
+  }
+
+  .features-zone {
+    top: 54%;
+  }
+
+  .pills-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .center-gap {
+    display: none;
+  }
+
+  .hero-cta {
+    bottom: 24px;
+    max-width: 320px;
+  }
+
+  .metrics-bar {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .metric-divider {
+    width: 60px;
+    height: 1px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SECTION 3: DENTAL SERVICES  (Phase 3 → 13 → 14 → 15 → 16)
+   ────────────────────────────────────────────────────────────────
+   Phase 16 gives the clinic → services hand-over the same treatment the
+   hero → clinic bridge has always had: the panel is pulled up −200vh so
+   it sits in the same scroll space as the last screen of the clinic, its
+   footage is pinned for the whole section, and the two full-screen layers
+   cross-dissolve in place (script.js drives the clinic's opacity, camera
+   push and the white bloom over exactly one viewport of scroll). Nothing
+   slides over anything: for that one screen the visitor sees the clinic's
+   final frames dissolve into the pin-still footage, exactly as the hero
+   dissolves into the clinic one section earlier.
+
+   Layer order inside the section:
+     0  .services-surface   the pinned video + poster (decorative)
+     1  .services-inner     heading, description, .services-grid
+
+   The footage is sticky rather than absolute, so it holds the viewport
+   for the whole section — through the dissolve and then behind the copy
+   as it rises — and its last pixel lands exactly on the section's last
+   pixel (the −100vh bottom margin) with no band left over. The copy is
+   pushed down by one viewport, so it enters *after* the dissolve: the
+   visitor sees the footage first, then the heading and the four cards
+   rise over it as they scroll on. On a phone, where the four cards stack
+   into a taller column than one screen, the same rule simply gives the
+   footage a longer hold behind them.
+
+   Phase 15 removed the veil: nothing sits between the clip and the page,
+   so the footage keeps its natural colour and brightness end to end.
+   Legibility comes from the content itself — the cards' own dark surface
+   and the header's own text shadow — never from tinting the video.
+
+   Phase 16 also swapped the clip for the new Cloudinary master (a slow
+   push-in on a giant molar, its own ground the same deep teal as this
+   panel), so the cross-dissolve lands on a colour the clinic already
+   ends near. The cards were trimmed by about a tenth of their height and
+   a seventh of their width — same type, same copy, more footage around
+   them — and playback starts before the panel is on screen, so the
+   dissolve never lands on a frozen poster frame.
+
+   The four cards appear one at a time, in order, as they rise into view;
+   that sequence lives in script.js and only runs when the visitor allows
+   motion (every card is plain visible otherwise).
+
+   Every colour is the site's own deep teal / aqua / mint set, declared
+   here as custom properties so nothing leaks into the sections above
+   or below.
+   ════════════════════════════════════════════════════════════════ */
+#services-section {
+  --svc-deep: #061a18;      /* the section ground, and the video's own tone */
+  --svc-edge: #08201d;      /* the colour the section ends on = the dentist's top */
+  --svc-surface: #0a2a26;   /* the camera-facing surface of the cards */
+  --svc-text: #e8fbf6;      /* headings */
+  --svc-text-2: #c6e3e0;    /* body copy */
+  --svc-text-3: #a7f3d0;    /* list copy */
+  --svc-aqua: #2dd4bf;      /* accents, marks */
+  --svc-aqua-2: #5eead4;    /* accent text and focus rings */
+  --svc-hair: rgba(94, 234, 212, 0.16);
+  --svc-top: clamp(88px, 12vh, 136px);  /* copy clears the fixed navbar */
+
+  position: relative;
+  /* The scroll-space overlap (the hero → clinic bridge uses the same 200vh
+     figure): the section now starts one full screen before the clinic ends,
+     which is what gives the cross-dissolve its window. Both layers are
+     full-screen and pinned, so nothing ever slides across the other. */
+  margin-top: -200vh;
+  /* No overflow: hidden here — it would make this section the sticky
+     surface's scrollport and freeze the footage in place. The surface
+     clips the video itself, and nothing else can bleed sideways. */
+  padding: 0;
+  background: var(--svc-edge);
+  color: var(--svc-text-2);
+  /* A hash or scrollIntoView() aimed at #services-section should land on the
+     finished panel — copy and cards in place, one screen above the dentist —
+     not on the screen of clinic (or the empty footage) that still covers its
+     first two viewports. */
+  scroll-margin-top: 200vh;
+  scroll-margin-top: 200svh;
+}
+
+/* ─── Section Backdrop — the supplied clip, pinned, edge to edge ────────
+   Sticky at the top of the section, so the footage holds the viewport for
+   the entire panel: it is what the clinic dissolves into, and it stays
+   behind the copy as the copy rises over it. Because it is the section's
+   first block (and the copy is pulled up over it), the section is exactly
+   as tall as the copy block — so the footage's last pixel lands on the
+   section's last pixel and the video never leaves a strip of plain
+   background behind it, at any window size.
+   Nothing is painted on top of it: the poster sits underneath the video
+   (not over it), and it shows while the clip buffers, if the file cannot
+   play, and on its own under reduced motion, where the stylesheet removes
+   the video element. Decorative throughout — pointer-events: none keeps
+   the whole layer inert, so every card, link and button keeps its clicks.
+   (The video is pre-rolled by script.js before it can be seen: the
+   dissolve always opens on moving footage.) */
+.services-surface {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  pointer-events: none;
+  background: url("services-backdrop-poster.jpg?v=2") center / cover no-repeat var(--svc-edge);
+}
+
+.services-footage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* fills the section without stretching, composition kept centred at every
+     size — desktop, tablet and mobile alike */
+  object-fit: cover;
+  object-position: center;
+}
+
+/* ─── No tint: the footage runs at its own brightness ──────────────────
+   Phase 15 removed the veil entirely. Nothing is painted between the video
+   and the page — no gradient, no tint, no filter, no backdrop — so the clip
+   shows its natural colour and exposure end to end. Legibility is carried by
+   the content's own surfaces (the cards) and by the type's own shadow
+   (below), never by darkening the footage. */
+
+/* ─── Foreground layer — heading, description, service grid ──────────────
+   Pulled up over the pinned surface (−100vh margin cancels exactly the
+   height the surface takes in flow), then pushed down again by two
+   viewports plus the navbar clearance: one viewport for the dissolve and
+   one so the copy is still entirely below the fold when the dissolve
+   ends — it rises into the finished footage afterwards, which is what
+   gives the card sequence its room. box-sizing and the two-side padding
+   keep the copy block exactly as wide as it was when the section carried
+   the padding, so the header's centring and the grid's max-width are
+   unchanged. The generous bottom padding is deliberate: it is the band of
+   footage under the cards, and it also keeps the section's end far enough
+   below them that the video is still full-bleed when the copy settles. */
+.services-inner {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  max-width: calc(1240px + 2 * clamp(24px, 5vw, 64px));
+  margin: -100vh auto 0;
+  margin: -100svh auto 0;
+  padding: calc(200vh + var(--svc-top)) clamp(24px, 5vw, 64px) clamp(96px, 40vh, 380px);
+  padding: calc(200svh + var(--svc-top)) clamp(24px, 5vw, 64px) clamp(96px, 40vh, 380px);
+}
+
+/* ─── Section Header ─────────────────────────────────────────────────── */
+.services-header {
+  max-width: 780px;
+  margin: 0 auto clamp(30px, 4.2vh, 46px);
+  text-align: center;
+  /* With the veil gone, legibility comes from the type itself: a directional
+     halo tight around every stroke (so each glyph owns a dark edge in all
+     directions) plus progressively wider soft shadows. No panel, no tint, no
+     blur is ever laid over the footage. */
+  text-shadow:
+    -1px -1px 1px rgba(3, 14, 13, 0.95),
+    1px -1px 1px rgba(3, 14, 13, 0.95),
+    -1px 1px 1px rgba(3, 14, 13, 0.95),
+    1px 1px 1px rgba(3, 14, 13, 0.95),
+    0 0 2px rgba(3, 14, 13, 0.9),
+    0 2px 6px rgba(3, 14, 13, 0.86),
+    0 6px 20px rgba(3, 14, 13, 0.7),
+    0 12px 42px rgba(3, 14, 13, 0.46);
+}
+
+.services-eyebrow {
+  display: inline-block;
+  margin: 0;
+  padding: 7px 18px;
+  /* The chip carries its own surface — a small translucent deep-green pill,
+     not a layer over the clip — so its 12px aqua label stays legible on the
+     brightest frames. */
+  background: rgba(4, 20, 18, 0.62);
+  border: 1px solid rgba(94, 234, 212, 0.34);
+  border-radius: 999px;
+  color: var(--svc-aqua-2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.services-title {
+  margin: 18px 0 0;
+  color: var(--svc-text);
+  font-size: clamp(32px, 4.6vw, 54px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.032em;
+  /* The clip is white-heavy in places (a giant white molar, white coats), so
+     the display type carries a thin dark edge of its own — painted behind
+     the fill, never over it — on top of the shared shadows. Purely the
+     glyphs' styling; nothing is laid over the footage. */
+  -webkit-text-stroke: 0.05em rgba(3, 14, 13, 0.9);
+  paint-order: stroke fill;
+}
+
+.services-desc {
+  margin: 14px 0 0;
+  color: var(--svc-text-2);
+  font-size: clamp(15px, 1.3vw, 17px);
+  line-height: 1.6;
+  -webkit-text-stroke: 0.07em rgba(3, 14, 13, 0.92);
+  paint-order: stroke fill;
+}
+
+/* ─── Card Grid — 4 columns → 2 → 1 ──────────────────────────────────── */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 1fr; /* consistent card heights row to row */
+  align-items: stretch;
+  /* Phase 16: the row is a little narrower than the copy block and a little
+     more spaced out, so the footage keeps a clear margin down both sides of
+     the cards and through the gaps — the panel reads as footage first,
+     cards second, without shrinking the type. */
+  max-width: 1160px;
+  margin-inline: auto;
+  gap: clamp(16px, 1.7vw, 24px);
+}
+
+/* Below 1180px four columns would squeeze the copy, so the grid goes
+   straight to a balanced 2 × 2 — never a ragged 3 + 1 row. */
+@media (max-width: 1179px) {
+  .services-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Service Card ───────────────────────────────────────────────────────
+   A restrained, slightly translucent dark green surface: one hairline
+   border, one soft shadow, no backdrop-filter and no glass. Hover/focus is
+   background + border + accent colour only, so the one-shot entrance is
+   never delayed by it.
+
+   Phase 16 trimmed the card box (padding, icon, internal gaps and type
+   scale) by roughly a tenth of its height and a seventh of its width, so
+   more of the clip stays visible around and behind the row. Every label,
+   description, bullet and link is unchanged in wording and still sits on
+   one line where it did before. */
+.service-card {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(15px, 1.35vw, 19px);
+  background: rgba(6, 26, 24, 0.74);
+  border: 1px solid var(--svc-hair);
+  border-radius: 13px;
+  box-shadow: 0 10px 26px rgba(3, 14, 13, 0.26);
+  transition: box-shadow 0.4s ease, border-color 0.4s ease, background-color 0.4s ease;
+}
+
+.service-card:hover,
+.service-card:focus-within {
+  background: rgba(7, 34, 30, 0.82);
+  border-color: rgba(94, 234, 212, 0.42);
+  box-shadow: 0 16px 34px rgba(3, 14, 13, 0.38);
+}
+
+.service-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 13px;
+  border-radius: 11px;
+  background: rgba(45, 212, 191, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(94, 234, 212, 0.22);
+  color: var(--svc-aqua-2);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.service-icon svg {
+  display: block;
+  width: 21px;
+  height: 21px;
+}
+
+.service-card:hover .service-icon,
+.service-card:focus-within .service-icon {
+  transform: translateY(-2px);
+  box-shadow: inset 0 0 0 1px rgba(94, 234, 212, 0.4), 0 6px 14px rgba(3, 14, 13, 0.3);
+}
+
+.service-title {
+  margin: 0;
+  color: var(--svc-text);
+  font-size: clamp(16px, 1.15vw, 18px);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  transition: color 0.3s ease;
+}
+
+.service-card:hover .service-title,
+.service-card:focus-within .service-title {
+  color: var(--svc-aqua-2);
+}
+
+.service-text {
+  margin: 8px 0 0;
+  color: var(--svc-text-2);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.service-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.service-benefits li {
+  position: relative;
+  padding-left: 16px;
+  color: var(--svc-text-3);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.service-benefits li::before {
+  content: "";
+  position: absolute;
+  top: 0.5em;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--svc-aqua);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.16);
+}
+
+.service-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: auto; /* bottom-aligns every "Book Treatment" link */
+  padding-top: 14px;
+  color: var(--svc-aqua-2);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.service-link-arrow {
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+
+.service-link:hover,
+.service-link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.service-link:hover .service-link-arrow,
+.service-link:focus-visible .service-link-arrow {
+  transform: translateX(4px);
+}
+
+.service-link:focus-visible {
+  border-radius: 6px;
+  outline: 3px solid rgba(94, 234, 212, 0.6);
+  outline-offset: 3px;
+}
+
+/* ─── Entrance Animation — progressive enhancement only ──────────────
+   Hidden initial states exist only once script.js has confirmed that motion
+   is allowed (html.js-anim), and the cards are hidden only after the
+   scroll-linked sequence has taken over (html.js-anim.svc-seq). Without JS,
+   with reduced motion, if initialisation fails or if the sequence never gets
+   a frame, all four cards and all text stay fully visible. */
+html.js-anim .services-anim {
+  opacity: 0;
+  transform: translateY(26px);
+}
+
+.services-header .services-anim:nth-child(2) { --hd: 90ms; }
+.services-header .services-anim:nth-child(3) { --hd: 180ms; }
+
+html.js-anim .services-anim.is-in {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 0.7, 0.3, 1) var(--hd, 0ms),
+    transform 0.7s cubic-bezier(0.22, 0.7, 0.3, 1) var(--hd, 0ms);
+}
+
+/* ─── Cards: sequential, scroll-linked reveal ────────────────────────────
+   script.js writes each card's opacity and transform every frame from the
+   panel's scroll position — one card at a time, first to fourth — so there
+   is deliberately no CSS transition here for them to fight with. A card
+   that has completed keeps its latched end state for the rest of the visit
+   (the `.is-visible` rule is also the no-inline-style fallback). */
+html.js-anim.svc-seq .service-card {
+  opacity: 0;
+  transform: translateY(28px) scale(0.965);
+  will-change: opacity, transform;
+}
+
+html.js-anim.svc-seq .service-card.is-visible {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+/* ─── Clinic → Services White Bloom ──────────────────────────────────
+   Fixed inside #clinic-section, so it composites above both the fading
+   clinic scene and the services section rising beneath it; opacity is
+   driven by script.js and returns to 0 at the end of the hand-off. */
+.services-bloom {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 62% at 50% 44%,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(240, 252, 255, 0.72) 38%,
+    rgba(214, 244, 255, 0.34) 64%,
+    rgba(214, 244, 255, 0) 100%
+  );
+}
+
+/* ─── Reduced Motion ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html.js-anim .services-anim,
+  html.js-anim .service-card {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .service-icon,
+  .service-title,
+  .service-link-arrow {
+    transition: none !important;
+  }
+
+  .service-card:hover .service-icon,
+  .service-card:focus-within .service-icon {
+    transform: none !important;
+  }
+
+  /* the footage is pure motion: with motion off the poster alone carries
+     the backdrop — it is a frame of the same clip, cropped the same way,
+     so the section looks the same, just still */
+  .services-footage {
+    display: none;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   VISIT OUR CLINIC  (Phase 9 — the light, paper-like panel)
+
+   The page now has three deliberate voices: dark teal glass in the
+   services and dentist stages, warm ivory here, solid navy in the
+   footer. This section therefore shares none of the glass language —
+   no translucency, no backdrop-filter, no glow, no particles, no
+   decorative animation. It is solid white on soft ivory, a hairline
+   cool-grey border, one solid teal rule as its signature detail, and
+   navy / slate / teal type. The only motion is the one-shot entrance
+   and a colour change on hover.
+
+   Every colour is declared as a custom property on #location-section
+   so nothing here can leak into the glass sections above.
+   ════════════════════════════════════════════════════════════════ */
+#location-section {
+  --loc-ivory: #f5f8f7;       /* the section ground */
+  --loc-panel: #ffffff;       /* the one solid surface */
+  --loc-navy: #183047;        /* headings and figures */
+  --loc-slate: #526477;       /* supporting copy (5.7:1 on ivory) */
+  --loc-teal: #079eaa;        /* accent mark, focus rings, tinted shadow */
+  --loc-teal-deep: #087e88;   /* the accent when it carries text (4.8:1) */
+  --loc-teal-darker: #056a74; /* hover */
+  --loc-line: #e1e9e8;        /* hairlines */
+  --loc-chip: #eaf7f8;        /* pale teal icon ground */
+
+  padding: clamp(56px, 6.5vh, 82px) clamp(24px, 5vw, 64px) clamp(56px, 7vh, 88px);
+  background-color: var(--loc-ivory);
+  color: var(--loc-slate);
+}
+
+.location-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+  gap: clamp(26px, 3vw, 44px);
+  align-items: stretch;
+  max-width: 1240px; /* the same content width as the sections above */
+  margin: 0 auto;
+}
+
+/* Stack on tablet and below — information first, map underneath. */
+@media (max-width: 1024px) {
+  .location-inner {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Left: the information panel ────────────────────────────────────── */
+.location-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* keeps the accent rule inside the rounded corners */
+  padding: clamp(28px, 3vw, 40px);
+  background-color: var(--loc-panel);
+  border: 1px solid var(--loc-line);
+  border-radius: 14px; /* tighter than the glass cards, on purpose */
+  box-shadow:
+    0 1px 2px rgba(24, 48, 71, 0.05),
+    0 22px 44px -34px rgba(24, 48, 71, 0.35);
+}
+
+/* The section's one ornamental mark: a solid teal rule on the top edge.
+   Solid, not a gradient, and nothing glows. */
+.location-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background-color: var(--loc-teal);
+}
+
+/* Label: a short teal rule and letterspaced capitals — deliberately not the
+   pill the two glass sections use. */
+.location-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--loc-teal-deep);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.location-eyebrow::before {
+  content: "";
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background-color: var(--loc-teal);
+}
+
+.location-title {
+  margin: 12px 0 0;
+  color: var(--loc-navy);
+  font-size: clamp(30px, 3.4vw, 42px);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+}
+
+.location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 26px 0 clamp(24px, 3vh, 32px);
+}
+
+.location-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+/* Small pale-teal rounded-square ground behind each line icon. */
+.location-row-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background-color: var(--loc-chip);
+  border: 1px solid rgba(7, 158, 170, 0.18);
+  color: var(--loc-teal-deep); /* 4.3:1 on the chip */
+}
+
+.location-row-icon svg {
+  display: block;
+  width: 19px;
+  height: 19px;
+}
+
+.location-row-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.location-row-label {
+  margin: 0 0 5px;
+  color: var(--loc-slate);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.location-row-value {
+  margin: 0;
+  color: var(--loc-slate);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.location-row-note {
+  margin: 10px 0 0;
+  color: var(--loc-slate);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* The week, as a definition list: day on the left, hours on the right,
+   hairline between each row. */
+.location-hours {
+  margin: 12px 0 0;
+  border-top: 1px solid var(--loc-line);
+}
+
+.location-hours-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--loc-line);
+}
+
+.location-hours-row dt {
+  color: var(--loc-slate);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.location-hours-row dd {
+  margin: 0;
+  color: var(--loc-navy);
+  font-size: 13.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The two days that do not start at 2 PM. */
+.location-hours-accent {
+  color: var(--loc-teal-deep);
+}
+
+.location-phone {
+  display: inline-block;
+  padding: 2px 0;
+  color: var(--loc-teal-deep);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.location-phone:hover {
+  color: var(--loc-teal-darker);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.location-phone:focus-visible {
+  border-radius: 6px;
+  outline: 3px solid rgba(7, 158, 170, 0.45);
+  outline-offset: 3px;
+}
+
+/* ─── The directions button ──────────────────────────────────────────── */
+/* Solid teal, white label, one restrained shadow. The surface is the
+   deeper teal (#087e88) rather than #079eaa because white on #079eaa is
+   3.2:1 — under AA for the label — while white on #087e88 is 4.8:1. The
+   brighter teal is still the section's accent: the rule above, the
+   eyebrow, the icons and the focus rings all use it. */
+.directions-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: auto; /* sits on the panel floor when the column stretches */
+  padding: 13px 22px;
+  border-radius: 10px;
+  background-color: var(--loc-teal-deep);
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  box-shadow:
+    0 1px 2px rgba(24, 48, 71, 0.1),
+    0 12px 24px -14px rgba(8, 126, 136, 0.7);
+  transition: background-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+}
+
+.directions-btn:hover {
+  background-color: var(--loc-teal-darker);
+  box-shadow:
+    0 1px 2px rgba(24, 48, 71, 0.12),
+    0 16px 28px -14px rgba(5, 106, 116, 0.75);
+  transform: translateY(-1px);
+}
+
+.directions-btn:focus-visible {
+  outline: 3px solid rgba(7, 158, 170, 0.5);
+  outline-offset: 3px;
+}
+
+.directions-btn-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 640px) {
+  .directions-btn {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+/* ─── Right: the live map ────────────────────────────────────────────── */
+.location-map {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+}
+
+.location-map-frame {
+  position: relative;
+  flex: 1;
+  min-height: clamp(300px, 40vh, 460px);
+  overflow: hidden;
+  background-color: #e9eeed;
+  border: 1px solid var(--loc-line); /* a thin light-grey frame, not a glow */
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(24, 48, 71, 0.05),
+    0 22px 44px -34px rgba(24, 48, 71, 0.35);
+}
+
+.location-map-frame iframe {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.location-map-frame:focus-within {
+  outline: 3px solid rgba(7, 158, 170, 0.5);
+  outline-offset: 3px;
+}
+
+.location-map-caption {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  color: var(--loc-slate);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.location-map-caption svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+  color: var(--loc-teal-deep);
+}
+
+@media (max-width: 1024px) {
+  .location-map-frame {
+    min-height: clamp(320px, 48vh, 440px);
+  }
+}
+
+@media (max-width: 640px) {
+  .location-map-frame {
+    min-height: 300px;
+  }
+}
+
+/* ─── Entrance — progressive enhancement only ────────────────────────
+   The hidden initial state exists only under html.js-anim (JS running and
+   motion allowed); #location-section gains .is-visible once from the
+   IntersectionObserver in script.js, exactly as before. */
+html.js-anim #location-section .location-anim {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 0.7, 0.3, 1) var(--d, 0ms),
+    transform 0.6s cubic-bezier(0.22, 0.7, 0.3, 1) var(--d, 0ms);
+}
+
+html.js-anim #location-section.is-visible .location-anim {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-anim #location-section .location-anim {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .directions-btn,
+  .location-phone {
+    transition: none !important;
+  }
+
+  .directions-btn:hover {
+    transform: none !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+/* ================================================================
+   SECTION 4: MEET YOUR DENTIST  (Phase 8 - cinematic glass stage)
+
+   Scoped to #dentist-section and additive: the services and location
+   sections above and below it are untouched. The section is built to
+   the owner's reference - a dark cinematic stage with light beams, a
+   reflective floor, glowing frosted glass and drifting smoke - but
+   every colour is taken from this site's own palette (the hero and
+   clinic deep teals #061a18/#071913/#0a2a26, aqua #2dd4bf/#5eead4/
+   #7cecc9, mint #a7f3d0, sky #38bdf8). No green, no new hues.
+
+   The top and bottom edges fade through 76px so the dark stage grows
+   out of the light services / location sections rather than sitting on
+   the page as a pasted rectangle.
+
+   Two doctors, no photographs: the project contains no authentic
+   portrait of either doctor, so both cards use the site's established
+   typographic monogram (SHB / AK). Nothing was invented to fill the
+   gap.
+
+   Entrance, smoke and the profile dialogs are all js-anim gated:
+   without JS - or with reduced motion - the section renders complete,
+   the profiles appear inline, and nothing animates.
+   ================================================================ */
+#dentist-section {
+  /* the page's own deep teal / aqua / mint set, promoted to one place */
+  --dent-deep: #061a18;
+  --dent-deeper: #071913;
+  --dent-mid: #0a2a26;
+  --dent-aqua: #2dd4bf;
+  --dent-aqua-2: #5eead4;
+  --dent-aqua-3: #7cecc9;
+  --dent-mint: #a7f3d0;
+  --dent-sky: #38bdf8;
+  --dent-text: #e8fbf6;
+  --dent-text-2: #cbe8e5;
+  --dent-text-3: #c6e3e0;
+
+  /* The section above ends on a fixed dark colour (--svc-edge on
+     #services-section = #08201d), so the overlap is permanently 0: the two
+     dark sections simply abut, and the section opens on its own compact top
+     padding. Kept as a custom property so the padding formula below and its
+     one media query stay in one shape. */
+  --dent-overlap: 0px;
+  /* The top fade now runs the other way: it starts on the services
+     section's closing colour, so the hand-off has no seam. */
+  --dent-top-fade: linear-gradient(180deg, #08201d 0%, rgba(8, 32, 29, 0) 52px);
+
+  position: relative;
+  z-index: 2; /* above the services section it starts beneath */
+  isolation: isolate;
+  overflow: hidden; /* the beams, fog and smoke stay inside the section box */
+  margin-top: calc(var(--dent-overlap) * -1);
+  /* This padding alone decides where the label, heading and cards start: the
+     section abuts the services section's closing colour, so there is no tail
+     to cover and no lift to make up for. */
+  padding: calc(clamp(48px, 6vh, 72px) + var(--dent-overlap)) clamp(24px, 5vw, 64px) clamp(72px, 9vh, 104px);
+  color: var(--dent-text-2);
+  background:
+    var(--dent-top-fade),
+    linear-gradient(0deg, #f5f8f7 0%, rgba(245, 248, 247, 0) 52px),
+    radial-gradient(118% 56% at 50% -10%, rgba(45, 212, 191, 0.34) 0%, rgba(94, 234, 212, 0.12) 34%, rgba(45, 212, 191, 0) 62%),
+    radial-gradient(88% 46% at 10% 106%, rgba(56, 189, 248, 0.22) 0%, rgba(56, 189, 248, 0) 68%),
+    radial-gradient(74% 44% at 90% 98%, rgba(45, 212, 191, 0.2) 0%, rgba(45, 212, 191, 0) 70%),
+    linear-gradient(180deg, #08201d 0%, #0a2723 44%, #0d322b 100%);
+}
+
+/* The stage's beams are children of the section, so they paint above every
+   background layer - including --dent-top-fade, which only masks the
+   section's own gradients. Clipped hard at the section's first row, the
+   beams landed on the services section's closing colour as a visible step
+   (measured: (8,32,29) -> (16,52,48) in a single row). This band repaints
+   that same colour above the stage, so the boundary starts on the identical
+   pixel and the aqua glow ramps in over 52px instead of switching on. It
+   sits over the stage (z0) and under the copy (z2), and stops short of the
+   eyebrow at the 54px padding line. */
+#dentist-section::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 52px;
+  z-index: 1;
+  background: linear-gradient(180deg, #08201d 0%, rgba(8, 32, 29, 0) 52px);
+  pointer-events: none;
+}
+
+.dentist-inner {
+  position: relative;
+  z-index: 2; /* above the stage */
+  max-width: 1240px; /* same content width as services & location */
+  margin: 0 auto;
+}
+
+/* --- Stage: beams, blooms, vignette, reflective floor --------------------- */
+.dentist-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Vignette - keeps the eye on the two cards */
+.dentist-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(78% 62% at 50% 46%, rgba(45, 212, 191, 0.14) 0%, rgba(45, 212, 191, 0) 62%),
+    radial-gradient(120% 92% at 50% 44%, rgba(4, 16, 14, 0) 42%, rgba(4, 16, 14, 0.55) 100%);
+}
+
+/* Reflective floor: the glossy surface the cards stand on */
+.dentist-stage::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 46%;
+  background:
+    linear-gradient(180deg, rgba(45, 212, 191, 0) 0%, rgba(45, 212, 191, 0.07) 30%, rgba(4, 16, 14, 0.34) 100%),
+    linear-gradient(180deg, rgba(203, 232, 229, 0) 0%, rgba(203, 232, 229, 0.05) 62%, rgba(203, 232, 229, 0) 100%);
+}
+
+/* Soft light beams drifting across the stage */
+.dentist-beam {
+  position: absolute;
+  top: -34%;
+  width: 34%;
+  height: 168%;
+  background: linear-gradient(180deg, rgba(94, 234, 212, 0.22) 0%, rgba(94, 234, 212, 0.07) 46%, rgba(94, 234, 212, 0) 78%);
+  filter: blur(30px);
+  mix-blend-mode: screen;
+  transform-origin: 50% 0;
+}
+
+.dentist-beam--a {
+  left: 4%;
+  transform: rotate(15deg);
+  animation: dentBeamA 26s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+
+.dentist-beam--b {
+  left: 46%;
+  width: 26%;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.19) 0%, rgba(56, 189, 248, 0) 74%);
+  transform: rotate(-11deg);
+  animation: dentBeamB 32s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+
+.dentist-beam--c {
+  right: 2%;
+  width: 30%;
+  transform: rotate(19deg);
+  background: linear-gradient(180deg, rgba(45, 212, 191, 0.18) 0%, rgba(45, 212, 191, 0) 76%);
+}
+
+/* The shafts only sweep while the section is on screen (and only when motion
+   is allowed, since html.js-anim is the motion gate), so nothing animates
+   off screen. */
+html.js-anim #dentist-section.is-awake .dentist-beam--a,
+html.js-anim #dentist-section.is-awake .dentist-beam--b {
+  animation-play-state: running;
+}
+
+@keyframes dentBeamA {
+  from { transform: rotate(15deg) translate3d(-2%, 0, 0); opacity: 0.75; }
+  to { transform: rotate(12deg) translate3d(3%, 1%, 0); opacity: 1; }
+}
+
+@keyframes dentBeamB {
+  from { transform: rotate(-11deg) translate3d(2%, 0, 0); opacity: 1; }
+  to { transform: rotate(-14deg) translate3d(-3%, 1%, 0); opacity: 0.7; }
+}
+
+/* Two very soft fog volumes for depth */
+.dentist-fog {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(46px);
+}
+
+.dentist-fog--a {
+  left: -8%;
+  bottom: 16%;
+  width: min(46vw, 520px);
+  aspect-ratio: 1.5;
+  background: radial-gradient(closest-side, rgba(45, 212, 191, 0.16), rgba(45, 212, 191, 0) 72%);
+}
+
+.dentist-fog--b {
+  right: -6%;
+  top: 22%;
+  width: min(38vw, 440px);
+  aspect-ratio: 1.4;
+  background: radial-gradient(closest-side, rgba(56, 189, 248, 0.12), rgba(56, 189, 248, 0) 72%);
+}
+
+/* Wide pool of stage light across the floor line (the precise floor under
+   the cards is the grid's ::after, above) */
+.dentist-pool {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  width: min(94vw, 1100px);
+  height: 220px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(45, 212, 191, 0.26) 0%, rgba(56, 189, 248, 0.09) 46%, rgba(45, 212, 191, 0) 76%);
+  filter: blur(24px);
+}
+
+/* --- Header -------------------------------------------------------------- */
+.dentist-header {
+  max-width: 880px;
+  margin: 0 auto clamp(42px, 6vh, 66px);
+  text-align: center;
+}
+
+.dentist-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 9px 20px;
+  border: 1px solid rgba(94, 234, 212, 0.34);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 30px -8px rgba(45, 212, 191, 0.45);
+  color: var(--dent-aqua-3);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.dentist-eyebrow::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dent-aqua-2);
+  box-shadow: 0 0 10px 2px rgba(45, 212, 191, 0.75);
+}
+
+.dentist-title {
+  margin: 22px 0 0;
+  color: var(--dent-text);
+  font-size: clamp(32px, 4.4vw, 54px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.dentist-title-accent {
+  background: linear-gradient(100deg, var(--dent-aqua-2) 0%, var(--dent-sky) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dentist-intro {
+  max-width: 620px;
+  margin: 18px auto 0;
+  color: var(--dent-text-3);
+  font-size: clamp(15px, 1.6vw, 17px);
+  line-height: 1.65;
+}
+
+/* --- The 3D carousel -------------------------------------------------------
+   One dominant card sits dead centre; the companion waits behind it and to
+   the side - smaller, dimmer, turned a few degrees away and pushed back along
+   Z, so the pair reads as two planes in one space rather than two boxes next
+   to each other. Both cards occupy the same grid cell, which is what gives
+   the track its height without taking either card out of flow, and every pose
+   is a plain custom property: moving a class is enough to send either card
+   between "in front" and "behind", and CSS transitions do the rest. */
+.dentist-carousel {
+  /* how far to the side the companion stands, in its own (pre-perspective)
+     units: 520px lands at roughly 450px on screen once translateZ has scaled
+     it, which clears the 480px front card with a gap and no overlap */
+  --away-x: 520px;
+  position: relative;
+  /* horizontal swipes switch doctors; vertical scrolling is never touched */
+  touch-action: pan-y;
+}
+
+.dentist-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch; /* both panes end up the same height */
+  justify-items: center;
+  perspective: 1700px;
+  perspective-origin: 50% 46%;
+}
+
+/* The glossy floor, anchored to the track so it always sits directly under
+   the cards however tall the section ends up: a faint mirrored sheen rising
+   from the floor line, and the pool of stage light the panes cast down.
+   Both paint below the cards (z-index -1 inside the track's own context). */
+.dentist-track::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -124px;
+  z-index: -1;
+  height: 132px;
+  border-radius: 0 0 46% 46%;
+  background: linear-gradient(180deg, rgba(203, 232, 229, 0.16) 0%, rgba(203, 232, 229, 0) 78%);
+  filter: blur(14px);
+  pointer-events: none;
+}
+
+.dentist-track::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -108px;
+  z-index: -1;
+  width: min(94%, 960px);
+  height: 200px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(45, 212, 191, 0.34) 0%, rgba(45, 212, 191, 0.12) 48%, rgba(45, 212, 191, 0) 76%);
+  filter: blur(22px);
+  pointer-events: none;
+}
+
+/* --- Carousel indicators: the lit pill is the card in front ---------------- */
+.dentist-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: clamp(26px, 3.6vh, 40px);
+}
+
+.dentist-dot {
+  position: relative;
+  width: 12px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background-color: rgba(203, 232, 229, 0.26);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: width 0.45s cubic-bezier(0.22, 0.72, 0.24, 1), background-color 0.45s ease, box-shadow 0.45s ease;
+}
+
+.dentist-dot.is-on {
+  width: 38px;
+  background: linear-gradient(90deg, var(--dent-aqua-2) 0%, var(--dent-sky) 100%);
+  box-shadow: 0 0 20px -3px rgba(45, 212, 191, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.dentist-dot:not(.is-on):hover {
+  background-color: rgba(203, 232, 229, 0.46);
+}
+
+/* The pill is a hairline by design; the tap target is not. This invisible
+   overlay gives each dot a 30x50 hit area without touching the visual. */
+.dentist-dot::after {
+  content: "";
+  position: absolute;
+  inset: -14px -9px;
+}
+
+.dentist-dot:focus-visible {
+  outline: 3px solid rgba(94, 234, 212, 0.75);
+  outline-offset: 4px;
+}
+
+/* --- The glass pane -------------------------------------------------------
+   Dark glass: a thin translucent white wash over the stage with a bright
+   aqua rim, an inner top highlight and an aqua floor wash inside the pane.
+   The sheen and the smoke sit between the glass and the copy (negative
+   z-index inside the card's own stacking context), so no wisp ever crosses
+   type. backdrop-filter does the frosting and also creates that context.
+
+   The base pane is the front pane: bright rim, strong outer glow, sharp.
+   .is-away dials every one of those values down for the companion, so
+   whichever doctor is in front automatically wears the prominent glass. */
+.dentist-card {
+  --dent-rim: rgba(125, 236, 222, 0.46);
+  --dent-glow: rgba(45, 212, 191, 0.46);
+  --dent-inner: rgba(45, 212, 191, 0.32);
+  --dent-depth: rgba(2, 12, 11, 0.7);
+
+  /* the pose: where this pane stands in the carousel. Every value below is
+     overridden by .is-away, and the arrival simply overrides the whole
+     transform, so one set of transitions drives both. */
+  --tx: 0px;
+  --ty: 0px;
+  --tz: 0px;
+  --ry: 0deg;
+  --sc: 1;
+  --op: 1;
+  --bl: 0px;
+
+  position: relative;
+  z-index: 3;
+  grid-area: 1 / 1; /* both cards share one cell, so the track sizes itself */
+  width: min(480px, 100%);
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* content is centred in the shared pane height */
+  padding: clamp(28px, 3vw, 42px);
+  border: 1px solid var(--dent-rim);
+  border-radius: 26px;
+  /* A scrim sits under the glass washes: the stage behind the pane carries
+     light beams, so without it the blurred backdrop can go bright enough to
+     eat the copy. It is the same deep teal as the stage, which is what the
+     reference's panes look like anyway. */
+  background-color: rgba(5, 22, 20, 0.74);
+  background-image:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.17) 0%, rgba(255, 255, 255, 0.065) 44%, rgba(45, 212, 191, 0.1) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 1px 30px rgba(94, 234, 212, 0.14),
+    inset 0 -40px 64px -38px var(--dent-inner),
+    0 0 0 1px rgba(45, 212, 191, 0.16),
+    0 36px 84px -28px var(--dent-depth),
+    0 0 130px -10px var(--dent-glow);
+  backdrop-filter: blur(22px) saturate(130%);
+  -webkit-backdrop-filter: blur(22px) saturate(130%);
+  text-align: center;
+  transform: translate3d(var(--tx), var(--ty), var(--tz)) rotateY(var(--ry)) scale(var(--sc));
+  opacity: var(--op);
+  filter: blur(var(--bl));
+  transition:
+    transform 0.9s cubic-bezier(0.22, 0.72, 0.24, 1),
+    opacity 0.62s ease,
+    filter 0.7s ease,
+    box-shadow 0.4s ease,
+    border-color 0.4s ease,
+    translate 0.4s ease;
+  translate: 0 0;
+}
+
+/* the specular sheen across the top-left of the pane */
+.dentist-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  border-radius: inherit;
+  background: linear-gradient(122deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0) 46%);
+  pointer-events: none;
+}
+
+.dentist-card:hover {
+  border-color: rgba(125, 236, 222, 0.52);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 1px 26px rgba(94, 234, 212, 0.14),
+    inset 0 -34px 56px -34px rgba(45, 212, 191, 0.3),
+    0 0 0 1px rgba(45, 212, 191, 0.18),
+    0 34px 76px -26px var(--dent-depth),
+    0 0 120px -10px rgba(45, 212, 191, 0.5);
+  translate: 0 -4px;
+}
+
+/* The pool of light the front pane throws down onto the floor line. */
+.dentist-card.is-active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -26px;
+  z-index: -2;
+  width: 86%;
+  height: 52px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(45, 212, 191, 0.4) 0%, rgba(45, 212, 191, 0) 74%);
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+/* --- The companion: behind, to the side, smaller, dimmer, softer glass ----
+   Nothing here is a bigger card or a duplicate: it is the same pane, one
+   step back along Z, a few degrees turned away, dimmed and softened. */
+.dentist-card.is-away {
+  --dent-rim: rgba(94, 234, 212, 0.26);
+  --dent-glow: rgba(45, 212, 191, 0.2);
+  --dent-inner: rgba(45, 212, 191, 0.16);
+  --tx: var(--away-x, 520px);
+  --ty: -8px;
+  --tz: -260px;
+  --ry: -7deg;
+  --sc: 0.9;
+  --op: 0.94;
+  --bl: 1.3px;
+  z-index: 1;
+  cursor: pointer;
+  background-color: rgba(5, 22, 20, 0.88);
+  background-image:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.05) 46%, rgba(45, 212, 191, 0.08) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 1px 24px rgba(94, 234, 212, 0.09),
+    inset 0 -34px 56px -34px var(--dent-inner),
+    0 0 0 1px rgba(45, 212, 191, 0.08),
+    0 26px 60px -26px var(--dent-depth),
+    0 0 80px -14px var(--dent-glow);
+}
+
+/* The companion's copy dims with the pane but stays comfortably AA on the
+   stage: only the glass is dialled back, never the legibility. */
+.dentist-card.is-away .dentist-name {
+  color: var(--dent-text);
+}
+
+.dentist-card.is-away .dentist-desc {
+  color: var(--dent-text-2);
+}
+
+/* The companion's own plumes are softer: they sit over its glass, and a fully
+   lit curl behind a dimmer pane costs more contrast than it buys depth. */
+.dentist-card.is-away .dentist-drift {
+  opacity: 0.5;
+}
+
+/* Hovering the companion offers to bring it forward. */
+.dentist-card.is-away:hover {
+  --op: 0.95;
+  --bl: 0px;
+  border-color: rgba(125, 236, 222, 0.44);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.36),
+    inset 0 1px 26px rgba(94, 234, 212, 0.12),
+    inset 0 -34px 56px -34px rgba(45, 212, 191, 0.26),
+    0 0 0 1px rgba(45, 212, 191, 0.14),
+    0 30px 70px -26px var(--dent-depth),
+    0 0 110px -10px rgba(45, 212, 191, 0.4);
+}
+
+/* --- Card content -------------------------------------------------------- */
+.dentist-avatar {
+  display: grid;
+  place-items: center;
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  background: linear-gradient(140deg, var(--dent-sky) 0%, #0ea5e9 46%, var(--dent-aqua) 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -14px 26px -12px rgba(4, 60, 90, 0.55),
+    0 0 0 7px rgba(203, 232, 229, 0.14),
+    0 0 0 8px rgba(94, 234, 212, 0.3),
+    0 18px 38px -12px rgba(14, 165, 233, 0.5),
+    0 0 60px -6px rgba(45, 212, 191, 0.5);
+  color: #ffffff;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.dentist-name {
+  margin: 24px 0 0;
+  color: var(--dent-text);
+  font-size: clamp(22px, 2.5vw, 30px);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.dentist-role {
+  margin: 12px 0 0;
+  color: var(--dent-aqua-2);
+  font-size: clamp(12px, 1.15vw, 13.5px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.dentist-credential {
+  margin: 8px 0 0;
+  color: var(--dent-text-3);
+  font-size: clamp(14px, 1.5vw, 16px);
+  font-weight: 600;
+}
+
+.dentist-sep {
+  width: 100%;
+  height: 1px;
+  margin: clamp(20px, 2.4vw, 28px) 0 0;
+  border: 0;
+  background: linear-gradient(90deg, rgba(148, 233, 224, 0) 0%, rgba(148, 233, 224, 0.26) 50%, rgba(148, 233, 224, 0) 100%);
+}
+
+.dentist-desc {
+  margin: 20px 0 0;
+  color: var(--dent-text-3);
+  font-size: clamp(15px, 1.55vw, 16.5px);
+  line-height: 1.68;
+  text-wrap: pretty;
+}
+
+.dentist-view {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: clamp(24px, 3vw, 34px);
+  padding: 14px 30px;
+  border: 1px solid rgba(125, 236, 222, 0.4);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 10px 26px -14px rgba(2, 12, 11, 0.9),
+    0 0 30px -12px rgba(45, 212, 191, 0.6);
+  color: var(--dent-text);
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease, translate 0.3s ease;
+}
+
+.dentist-view:hover {
+  border-color: rgba(167, 243, 208, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.36),
+    0 12px 30px -14px rgba(2, 12, 11, 0.9),
+    0 0 44px -8px rgba(45, 212, 191, 0.8);
+  translate: 0 -2px;
+}
+
+.dentist-view:focus-visible {
+  outline: 3px solid rgba(94, 234, 212, 0.7);
+  outline-offset: 3px;
+}
+
+.dentist-view svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  transition: transform 0.3s ease;
+}
+
+.dentist-view:hover svg {
+  transform: translateX(3px);
+}
+
+/* --- Smoke: the arrival burst host --------------------------------------- */
+.dentist-smoke {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+html.js-anim #dentist-section .dentist-card.is-smoking .dentist-smoke {
+  opacity: 1;
+}
+
+.dentist-puff {
+  position: absolute;
+  left: var(--px);
+  top: var(--py);
+  width: var(--ps);
+  height: var(--ps);
+  margin: calc(var(--ps) * -0.5) 0 0 calc(var(--ps) * -0.5);
+  border-radius: 50%;
+  background:
+    radial-gradient(34% 26% at 66% 32%, rgba(255, 255, 255, 0.44) 0%, rgba(255, 255, 255, 0) 72%),
+    radial-gradient(closest-side at 40% 38%, var(--pc1) 0%, var(--pc2) 52%, rgba(255, 255, 255, 0) 76%);
+  filter: blur(var(--bl, 6px));
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: dentPuff var(--pd) cubic-bezier(0.16, 0.62, 0.3, 1) var(--pdl) both;
+}
+
+@keyframes dentPuff {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.3) rotate(0deg);
+  }
+  14% {
+    opacity: var(--po);
+    transform: translate3d(calc(var(--dx) * 0.08), calc(var(--dy) * 0.1), 0) scale(0.5) rotate(calc(var(--rot) * 0.14));
+  }
+  50% {
+    opacity: calc(var(--po) * 0.74);
+    transform: translate3d(calc(var(--dx) * 0.46 + var(--cx) * 0.7), calc(var(--dy) * 0.44), 0) scale(calc(var(--sc) * 0.74)) rotate(calc(var(--rot) * 0.5));
+  }
+  80% {
+    opacity: calc(var(--po) * 0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--dx), var(--dy), 0) scale(var(--sc)) rotate(var(--rot));
+  }
+}
+
+.dentist-mote {
+  position: absolute;
+  left: var(--px);
+  top: var(--py);
+  width: var(--ps);
+  height: var(--ps);
+  margin: calc(var(--ps) * -0.5) 0 0 calc(var(--ps) * -0.5);
+  border-radius: 50%;
+  background: var(--pc1);
+  box-shadow: 0 0 14px 3px var(--pc2);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: dentMote var(--pd) cubic-bezier(0.3, 0.7, 0.4, 1) var(--pdl) both;
+}
+
+@keyframes dentMote {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.5); }
+  22% { opacity: var(--po); }
+  100% { opacity: 0; transform: translate3d(var(--dx), var(--dy), 0) scale(1.1); }
+}
+
+/* --- Smoke: the continuous drift -----------------------------------------
+   Eight slow plumes per card (six on phones) hugging the two side edges and
+   the bottom rim - exactly where the reference puts its smoke - with a thin
+   tendril higher up on each side. Every plume is a flat ellipse built from
+   two off-centre lobes, so it reads as a curl of smoke rather than a blob:
+   the tilt lives on the standalone `rotate` property and the keyframes drift,
+   curl and swell it. Transform and opacity only, no filters per frame beyond
+   the one static blur.
+
+   They exist only while the section is awake and motion is allowed
+   (html.js-anim ... .is-awake), so they cost nothing off screen, without JS,
+   or under reduced motion. */
+.dentist-drift {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+html.js-anim #dentist-section.is-awake .dentist-drift {
+  display: block;
+}
+
+.dentist-wisp {
+  position: absolute;
+  left: var(--wx);
+  top: var(--wy);
+  width: var(--ws);
+  height: calc(var(--ws) * var(--wh, 0.46));
+  margin: calc(var(--ws) * var(--wh, 0.46) * -0.5) 0 0 calc(var(--ws) * -0.5);
+  border-radius: 50%;
+  background:
+    radial-gradient(34% 26% at 32% 34%, var(--wch) 0%, rgba(255, 255, 255, 0) 74%),
+    radial-gradient(closest-side at 46% 50%, var(--wc1) 0%, var(--wc2) 52%, rgba(255, 255, 255, 0) 86%);
+  filter: blur(var(--wbl, 14px));
+  opacity: 0;
+  rotate: var(--wr0, 0deg);
+  will-change: transform, opacity;
+  animation: dentWisp var(--wd) ease-in-out var(--wdl) infinite;
+}
+
+/* One slow breath per plume: it grows in, lifts and curls while it fades,
+   drifts along its own vector, and swells as it goes. Transform and opacity
+   only, so the whole ring of smoke stays on the compositor. */
+@keyframes dentWisp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.78) rotate(0deg);
+  }
+  20% {
+    opacity: var(--wo);
+    transform: translate3d(calc(var(--wdx) * 0.2), calc(var(--wdy) * 0.22), 0) scale(calc(var(--wsc) * 0.86)) rotate(calc(var(--wrot) * 0.2));
+  }
+  58% {
+    opacity: calc(var(--wo) * 0.76);
+    transform: translate3d(calc(var(--wdx) * 0.52), calc(var(--wdy) * 0.62), 0) scale(calc(var(--wsc) * 0.98)) rotate(calc(var(--wrot) * 0.5));
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--wdx), var(--wdy), 0) scale(var(--wsc)) rotate(var(--wrot));
+  }
+}
+
+.dentist-drift .dentist-wisp:nth-child(1) { /* body (left, low) */
+  --wx: -14%;
+  --wy: 79%;
+  --ws: 360px;
+  --wh: 0.44;
+  --wr0: -22deg;
+  --wbl: 18px;
+  --wo: 0.7;
+  --wd: 19s;
+  --wdl: 0s;
+  --wdx: 54px;
+  --wdy: -212px;
+  --wsc: 1.5;
+  --wrot: 92deg;
+  --wc1: rgba(94, 234, 212, 0.95);
+  --wc2: rgba(45, 212, 191, 0.36);
+  --wch: rgba(224, 255, 250, 0.5);
+}
+
+.dentist-drift .dentist-wisp:nth-child(2) { /* curl (left) */
+  --wx: -9%;
+  --wy: 50%;
+  --ws: 230px;
+  --wh: 0.34;
+  --wr0: -32deg;
+  --wbl: 12px;
+  --wo: 0.74;
+  --wd: 23s;
+  --wdl: -7s;
+  --wdx: 40px;
+  --wdy: -186px;
+  --wsc: 1.5;
+  --wrot: 118deg;
+  --wc1: rgba(203, 238, 255, 0.92);
+  --wc2: rgba(160, 220, 235, 0.34);
+  --wch: rgba(240, 253, 255, 0.52);
+}
+
+.dentist-drift .dentist-wisp:nth-child(3) { /* tendril (left, high) */
+  --wx: -3%;
+  --wy: 20%;
+  --ws: 175px;
+  --wh: 0.28;
+  --wr0: -38deg;
+  --wbl: 11px;
+  --wo: 0.58;
+  --wd: 21s;
+  --wdl: -12s;
+  --wdx: 32px;
+  --wdy: -162px;
+  --wsc: 1.6;
+  --wrot: 126deg;
+  --wc1: rgba(56, 189, 248, 0.85);
+  --wc2: rgba(56, 189, 248, 0.3);
+  --wch: rgba(200, 235, 255, 0.46);
+}
+
+.dentist-drift .dentist-wisp:nth-child(4) { /* body (right, low) */
+  --wx: 106%;
+  --wy: 77%;
+  --ws: 230px;
+  --wh: 0.44;
+  --wr0: 24deg;
+  --wbl: 15px;
+  --wo: 0.34;
+  --wd: 24s;
+  --wdl: -4s;
+  --wdx: -56px;
+  --wdy: -220px;
+  --wsc: 1.5;
+  --wrot: -92deg;
+  --wc1: rgba(94, 234, 212, 0.93);
+  --wc2: rgba(45, 212, 191, 0.35);
+  --wch: rgba(224, 255, 250, 0.48);
+}
+
+.dentist-drift .dentist-wisp:nth-child(5) { /* curl (right) */
+  --wx: 103%;
+  --wy: 48%;
+  --ws: 190px;
+  --wh: 0.34;
+  --wr0: 34deg;
+  --wbl: 12px;
+  --wo: 0.3;
+  --wd: 22s;
+  --wdl: -10s;
+  --wdx: -42px;
+  --wdy: -184px;
+  --wsc: 1.5;
+  --wrot: -118deg;
+  --wc1: rgba(167, 243, 208, 0.92);
+  --wc2: rgba(146, 232, 222, 0.34);
+  --wch: rgba(240, 255, 248, 0.52);
+}
+
+.dentist-drift .dentist-wisp:nth-child(6) { /* tendril (right, high) */
+  --wx: 100%;
+  --wy: 18%;
+  --ws: 150px;
+  --wh: 0.28;
+  --wr0: 40deg;
+  --wbl: 11px;
+  --wo: 0.24;
+  --wd: 25s;
+  --wdl: -6s;
+  --wdx: -30px;
+  --wdy: -158px;
+  --wsc: 1.6;
+  --wrot: -126deg;
+  --wc1: rgba(203, 238, 255, 0.85);
+  --wc2: rgba(203, 238, 255, 0.3);
+  --wch: rgba(240, 253, 255, 0.44);
+}
+
+.dentist-drift .dentist-wisp:nth-child(7) { /* plume (floor, left) */
+  --wx: 32%;
+  --wy: 109%;
+  --ws: 300px;
+  --wh: 0.36;
+  --wr0: -18deg;
+  --wbl: 14px;
+  --wo: 0.64;
+  --wd: 26s;
+  --wdl: -14s;
+  --wdx: 26px;
+  --wdy: -170px;
+  --wsc: 1.44;
+  --wrot: 74deg;
+  --wc1: rgba(94, 234, 212, 0.9);
+  --wc2: rgba(45, 212, 191, 0.32);
+  --wch: rgba(224, 255, 250, 0.48);
+}
+
+.dentist-drift .dentist-wisp:nth-child(8) { /* plume (floor, right) */
+  --wx: 68%;
+  --wy: 110%;
+  --ws: 300px;
+  --wh: 0.36;
+  --wr0: 20deg;
+  --wbl: 14px;
+  --wo: 0.62;
+  --wd: 28s;
+  --wdl: -19s;
+  --wdx: -28px;
+  --wdy: -184px;
+  --wsc: 1.46;
+  --wrot: -74deg;
+  --wc1: rgba(203, 238, 255, 0.86);
+  --wc2: rgba(203, 238, 255, 0.3);
+  --wch: rgba(240, 253, 255, 0.46);
+}
+
+/* --- Arrival: the cards fly in along Z, then settle -----------------------
+   The section is observed once. Before it is .is-visible the front card
+   waits far away - small, low and blurred - and the companion waits even
+   further back, off its shoulder. The stagger lives in --d, so the companion
+   settles a beat after the card in front; only once both have landed does
+   script.js add .is-settled, which swaps the slow arrival timing for the
+   quicker carousel timing used when switching doctors. */
+html.js-anim #dentist-section:not(.is-visible) .dentist-card {
+  opacity: 0;
+  transform: translate3d(0, 40px, -560px) scale(0.86);
+  filter: blur(12px);
+}
+
+html.js-anim #dentist-section:not(.is-visible) .dentist-card.is-away {
+  opacity: 0;
+  transform: translate3d(var(--away-x, 520px), 32px, -780px) rotateY(-7deg) scale(0.8);
+  filter: blur(12px);
+}
+
+html.js-anim #dentist-section.is-visible:not(.is-settled) .dentist-card {
+  will-change: transform, opacity, filter;
+  transition:
+    opacity 0.72s cubic-bezier(0.22, 0.7, 0.3, 1) var(--d, 0ms),
+    transform 1.15s cubic-bezier(0.16, 0.88, 0.24, 1) var(--d, 0ms),
+    filter 0.95s cubic-bezier(0.22, 0.7, 0.3, 1) var(--d, 0ms);
+}
+
+html.js-anim #dentist-section .dentist-anim {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.66s cubic-bezier(0.22, 0.7, 0.3, 1) var(--d, 0ms),
+    transform 0.66s cubic-bezier(0.22, 0.7, 0.3, 1) var(--d, 0ms);
+}
+
+html.js-anim #dentist-section.is-visible .dentist-anim {
+  opacity: 1;
+  transform: none;
+}
+
+/* Gentle settle, not a bounce - and it has to carry the pose with it, since
+   the card's transform is also where it stands in the carousel. script.js
+   adds .is-landed when the flight ends and removes it again, so no animation
+   lingers on the compositor. */
+@keyframes dentSettle {
+  0% { transform: translate3d(var(--tx), var(--ty), var(--tz)) rotateY(var(--ry)) scale(calc(var(--sc) * 1.022)); }
+  46% { transform: translate3d(var(--tx), var(--ty), var(--tz)) rotateY(var(--ry)) scale(calc(var(--sc) * 0.9968)); }
+  100% { transform: translate3d(var(--tx), var(--ty), var(--tz)) rotateY(var(--ry)) scale(var(--sc)); }
+}
+
+html.js-anim #dentist-section .dentist-card.is-landed {
+  animation: dentSettle 0.7s cubic-bezier(0.22, 0.72, 0.24, 1) both;
+  will-change: auto;
+}
+
+/* --- Profile dialogs ------------------------------------------------------
+   A native <dialog>: the browser gives us the backdrop, focus trapping,
+   ESC and focus restore without a library. Without JS the panels are
+   rendered inline instead (see the no-JS block below), so nothing is
+   ever unreachable. */
+.dentist-dialog {
+  --dent-rim: rgba(125, 236, 222, 0.4);
+  /* The site's global `* { margin: 0 }` reset removes the UA's `margin: auto`
+     on <dialog>, which would pin the modal to the top-left corner. Re-assert
+     the centring explicitly. */
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(86vh, 760px);
+  padding: 0;
+  border: 1px solid var(--dent-rim);
+  border-radius: 24px;
+  background:
+    linear-gradient(158deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.05) 46%, rgba(45, 212, 191, 0.08) 100%),
+    linear-gradient(180deg, #07201d 0%, #061a18 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 0 1px rgba(45, 212, 191, 0.12),
+    0 40px 90px -30px rgba(2, 12, 11, 0.95),
+    0 0 120px -20px rgba(45, 212, 191, 0.5);
+  color: var(--dent-text-2, #cbe8e5);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.dentist-dialog::backdrop {
+  background: rgba(3, 12, 11, 0.66);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+.dentist-dialog[open] {
+  animation: dentDialogIn 0.34s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes dentDialogIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.dentist-dialog-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(28px, 4vw, 40px);
+  text-align: center;
+}
+
+.dentist-dialog-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(94, 234, 212, 0.28);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--dent-text-2, #cbe8e5);
+  cursor: pointer;
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.dentist-dialog-close:hover {
+  border-color: rgba(167, 243, 208, 0.6);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dentist-dialog-close:focus-visible {
+  outline: 3px solid rgba(94, 234, 212, 0.7);
+  outline-offset: 3px;
+}
+
+.dentist-dialog-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.dentist-dialog .dentist-name {
+  margin-top: 20px;
+}
+
+.dentist-dialog .dentist-avatar {
+  width: 92px;
+  height: 92px;
+  font-size: 26px;
+}
+
+/* the preserved owner content, restyled for the dark glass */
+.dentist-tagline {
+  margin: 14px 0 0;
+  color: var(--dent-aqua-3, #7cecc9);
+  font-size: clamp(14px, 1.5vw, 16px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.dentist-bio {
+  margin: 20px 0 0;
+  color: var(--dent-text-3, #b4d6d3);
+  font-size: 15.5px;
+  line-height: 1.72;
+  text-align: left;
+}
+
+.dentist-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dentist-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid rgba(94, 234, 212, 0.3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  color: var(--dent-aqua-2, #5eead4);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.dentist-chip svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.dentist-feature {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid rgba(126, 232, 214, 0.2);
+  border-radius: 16px;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.08) 0%, rgba(45, 212, 191, 0.05) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  text-align: left;
+}
+
+.dentist-feature-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.9) 0%, rgba(45, 212, 191, 0.9) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 10px 24px -12px rgba(45, 212, 191, 0.7);
+  color: #06281e;
+}
+
+.dentist-feature-icon svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.dentist-feature-body {
+  min-width: 0;
+}
+
+.dentist-feature-title {
+  margin: 0 0 4px;
+  color: var(--dent-text, #e8fbf6);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dentist-feature-text {
+  margin: 0;
+  color: var(--dent-text-3, #b4d6d3);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.dentist-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.dentist-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--dent-aqua-2, #5eead4) 0%, var(--dent-sky, #38bdf8) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 12px 28px -10px rgba(14, 165, 233, 0.6),
+    0 0 36px -8px rgba(45, 212, 191, 0.6);
+  color: #06281e;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dentist-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(45, 212, 191, 0.4);
+}
+
+.dentist-cta:focus-visible {
+  outline: 3px solid rgba(167, 243, 208, 0.8);
+  outline-offset: 3px;
+}
+
+.dentist-cta svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+
+.dentist-phone {
+  color: var(--dent-aqua-2, #5eead4);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+.dentist-phone:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.dentist-phone:focus-visible {
+  border-radius: 6px;
+  outline: 3px solid rgba(94, 234, 212, 0.7);
+  outline-offset: 3px;
+}
+
+/* --- No JS: the profiles are simply on the page ---------------------------
+   Without JS the carousel is not one: both panes stand in the flow, fully
+   readable, and the indicators (which could do nothing) are gone. */
+html:not(.js) .dentist-track {
+  grid-template-columns: 1fr;
+  gap: 26px;
+  perspective: none;
+}
+
+html:not(.js) .dentist-card {
+  grid-area: auto;
+  width: 100%;
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
+html:not(.js) .dentist-dots,
+html:not(.js) .dentist-view {
+  display: none; /* the buttons would do nothing */
+}
+
+html:not(.js) .dentist-dialog-close {
+  display: none; /* nothing to close */
+}
+
+html:not(.js) .dentist-dialog {
+  display: block;
+  position: static;
+  width: min(640px, 100%);
+  max-height: none;
+  margin: 26px auto 0;
+  overflow: visible;
+  animation: none;
+}
+
+html:not(.js) .dentist-dialog-body {
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* --- Tablets: the companion tucks in behind the front card ---------------- */
+@media (max-width: 1024px) {
+  .dentist-carousel {
+    --away-x: 22px;
+  }
+
+  .dentist-track {
+    perspective: 1300px;
+    perspective-origin: 50% 44%;
+  }
+
+  .dentist-card {
+    width: min(460px, 100%);
+  }
+
+  .dentist-card.is-away {
+    --tx: 22px;
+    --ty: -16px;
+    --tz: -190px;
+    --ry: -4deg;
+    --sc: 0.95;
+    --op: 0.44;
+    --bl: 1.6px;
+  }
+}
+
+/* --- Phones: shallower flight, lighter smoke ----------------------------- */
+@media (max-width: 640px) {
+  #dentist-section {
+    padding-top: calc(clamp(80px, 11vh, 104px) + var(--dent-overlap));
+  }
+
+  .dentist-beam--b,
+  .dentist-fog--b {
+    display: none; /* fewer moving layers on phones */
+  }
+
+  .dentist-beam--a,
+  .dentist-beam--c {
+    animation: none; /* no sweeping shafts on phones */
+  }
+
+  /* The companion tucks in behind the front card - there is no side room on
+     a phone, and this way there is no horizontal overflow either. */
+  .dentist-carousel {
+    --away-x: 16px;
+  }
+
+  .dentist-track {
+    perspective: 1200px;
+    perspective-origin: 50% 44%;
+  }
+
+  .dentist-card {
+    width: 100%;
+  }
+
+  .dentist-card.is-away {
+    --tx: 16px;
+    --ty: -12px;
+    --tz: -150px;
+    --ry: 0deg;
+    --sc: 0.96;
+    --op: 0.4;
+    --bl: 1.6px;
+  }
+
+  /* a comfortable touch target without a fatter pill */
+  .dentist-dot {
+    height: 8px;
+  }
+
+  .dentist-dot::after {
+    content: "";
+    position: absolute;
+    inset: -15px -8px;
+  }
+
+  .dentist-drift .dentist-wisp:nth-child(n + 7) {
+    display: none; /* six plumes per card on phones */
+  }
+
+  html.js-anim #dentist-section:not(.is-visible) .dentist-card {
+    transform: translate3d(0, 26px, -300px) scale(0.92);
+    filter: blur(7px);
+  }
+
+  html.js-anim #dentist-section:not(.is-visible) .dentist-card.is-away {
+    transform: translate3d(var(--away-x), 22px, -420px) rotateY(-7deg) scale(0.9);
+  }
+
+  .dentist-puff {
+    filter: blur(4px);
+  }
+
+  .dentist-smoke > :nth-child(9),
+  .dentist-smoke > :nth-child(10),
+  .dentist-smoke > :nth-child(n + 12) {
+    display: none;
+  }
+
+  .dentist-view,
+  .dentist-cta {
+    width: 100%;
+  }
+
+  .dentist-dialog-actions {
+    width: 100%;
+  }
+}
+
+/* --- Reduced motion: everything is simply there --------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  /* No 3D poses at all: the two panes simply stack, both fully readable,
+     and the indicators go with the motion. */
+  .dentist-track {
+    grid-template-columns: 1fr;
+    gap: 26px;
+    perspective: none;
+  }
+
+  .dentist-card,
+  .dentist-card.is-away {
+    grid-area: auto;
+    width: 100%;
+    /* Both panes are plain, full-strength cards here: the companion's dimming
+       and blur are part of the 3D pose, which reduced motion does not do. */
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+
+  .dentist-dots {
+    display: none;
+  }
+
+  html.js-anim #dentist-section .dentist-anim,
+  html.js-anim #dentist-section .dentist-card {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  #dentist-section .dentist-smoke,
+  #dentist-section .dentist-drift,
+  #dentist-section .dentist-beam,
+  #dentist-section .dentist-fog,
+  #dentist-section .dentist-pool {
+    display: none !important;
+  }
+
+  #dentist-section .dentist-card,
+  .dentist-view,
+  .dentist-cta,
+  .dentist-dialog-close {
+    transition: none !important;
+  }
+
+  .dentist-card:hover,
+  .dentist-view:hover,
+  .dentist-cta:hover {
+    translate: 0 0 !important;
+    transform: none !important;
+  }
+
+  .dentist-view:hover svg {
+    transform: none !important;
+  }
+
+  .dentist-dialog[open] {
+    animation: none !important;
+  }
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+   FOOTER  (Phase 9 — midnight navy)
+
+   The last step of the page's colour progression: teal glass stages
+   (services, dentist) → soft ivory (location) → solid navy. No glass,
+   no translucency, no glow. Flat #183047, white headings, cool light
+   grey supporting copy and one lightly-tinted teal for links, icons
+   and the footer's own small marks.
+
+   The teal here is a tint (#4fd1da, 7.4:1 on navy) rather than the
+   section accent (#079eaa, which is only 4.2:1 on navy and would fail
+   AA as link text). Same hue, readable weight. No page colours are
+   redefined: every token below is scoped to .site-footer.
+   ════════════════════════════════════════════════════════════════ */
+.site-footer {
+  --foot-navy: #183047;
+  --foot-text: #c6d4e0;   /* 8.9:1 on navy */
+  --foot-muted: #9fb4c4;  /* 6.3:1 on navy */
+  --foot-teal: #4fd1da;   /* 7.4:1 on navy */
+  --foot-line: rgba(255, 255, 255, 0.1);
+
+  background-color: var(--foot-navy);
+  color: var(--foot-text);
+}
+
+.site-footer-inner {
+  max-width: 1240px; /* the same content width as every section above */
+  margin: 0 auto;
+  padding: clamp(52px, 6.5vh, 76px) clamp(24px, 5vw, 64px) 0;
+}
+
+.site-footer-grid {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr 1fr 1.3fr;
+  gap: clamp(28px, 3.2vw, 52px);
+}
+
+/* A long clinic address must never be able to blow a grid track out. */
+.site-footer-col {
+  min-width: 0;
+}
+
+/* ─── Column 1: the clinic ───────────────────────────────────────────── */
+.site-footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
+.site-footer-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background-color: rgba(79, 209, 218, 0.12);
+  border: 1px solid rgba(79, 209, 218, 0.3);
+  color: var(--foot-teal);
+}
+
+.site-footer-mark svg {
+  width: 20px;
+  height: 20px;
+}
+
+.site-footer-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.site-footer-name {
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.site-footer-sub {
+  color: var(--foot-teal);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.site-footer-desc {
+  max-width: 34ch;
+  margin: 16px 0 0;
+  color: var(--foot-text);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* ─── Columns 2–4 ────────────────────────────────────────────────────── */
+.site-footer-heading {
+  margin: 0 0 15px;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.site-footer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer-list a {
+  display: inline-block;
+  padding: 3px 0; /* keeps every link a comfortable tap target */
+  color: var(--foot-teal);
+  font-size: 14.5px;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.site-footer-list a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer-contact li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--foot-text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.site-footer-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  color: var(--foot-teal);
+}
+
+.site-footer-contact a {
+  display: inline-block;
+  padding: 2px 0;
+  color: var(--foot-teal);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.site-footer-contact a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-footer-when {
+  color: var(--foot-muted);
+  font-size: 13px;
+}
+
+/* ─── Divider and copyright row ──────────────────────────────────────── */
+.site-footer-bottom {
+  margin-top: clamp(38px, 4.5vh, 58px);
+  padding: clamp(20px, 2.6vh, 26px) 0 clamp(22px, 3vh, 30px);
+  border-top: 1px solid var(--foot-line);
+  color: var(--foot-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.site-footer-bottom p {
+  margin: 0;
+}
+
+.site-footer-year {
+  color: var(--foot-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Focus and motion ───────────────────────────────────────────────── */
+.site-footer a:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid rgba(79, 209, 218, 0.7);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1024px) {
+  .site-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px 32px;
+  }
+
+  /* The brand block heads the stack and the contact block closes it, so both
+     take the full width; links and services sit side by side between them. */
+  .site-footer-brand,
+  .site-footer-contact-col {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .site-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-footer-list a,
+  .site-footer-contact a {
+    transition: none !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PHASE 11 — BOOK APPOINTMENT DIALOG
+   One booking surface for the page: the navbar's "Book Visit" CTA and the four
+   service cards' "Book Treatment" links all open it (data-book-open), on the
+   same native <dialog> pattern as the two doctor profiles — so there is exactly
+   one modal implementation, with the browser supplying the top layer, the focus
+   trap, ESC, focus restore and inertness.
+
+   The look is deliberately the *light* voice of "Visit Our Clinic", not the teal
+   glass of the Services / Meet Your Dentist stages: solid white panel, navy type,
+   teal accent, hairline borders, one restrained neutral shadow. No glass, no
+   translucency, no glow, no gradient — the single ornament is the same solid teal
+   rule that sits on the top edge of the clinic card. The dialog is nested inside
+   #location-section on purpose, so it inherits that section's --loc-* tokens
+   instead of duplicating them.
+
+   Opening and closing are a discrete display/overlay transition, so ESC and a
+   backdrop click animate exactly like the close button — no JS timers and no
+   second code path. Where allow-discrete is unsupported the dialog still opens
+   and closes correctly; it simply does so instantly.
+   ════════════════════════════════════════════════════════════════════════════ */
+.appointment-dialog {
+  /* The site's global `* { margin: 0 }` reset removes the UA's `margin: auto`
+     on <dialog>, which would otherwise pin the panel to the top-left corner. */
+  position: fixed;
+  inset: 0;
+  display: none; /* a <dialog> with no `open` is hidden — and stays hidden without JS */
+  flex-direction: column;
+  margin: auto;
+  width: min(520px, calc(100vw - 32px));
+  max-height: min(88vh, 760px);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--loc-line);
+  border-radius: 14px; /* the clinic card's radius, not the glass sections' 24px */
+  background-color: var(--loc-panel);
+  color: var(--loc-slate);
+  box-shadow:
+    0 1px 2px rgba(24, 48, 71, 0.06),
+    0 30px 60px -30px rgba(24, 48, 71, 0.55);
+  opacity: 0;
+  transform: translateY(14px) scale(0.96);
+  transition:
+    opacity 0.26s ease,
+    transform 0.28s cubic-bezier(0.2, 0.8, 0.3, 1),
+    display 0.26s allow-discrete,
+    overlay 0.26s allow-discrete;
+}
+
+.appointment-dialog[open] {
+  display: flex;
+  opacity: 1;
+  transform: none;
+}
+
+@starting-style {
+  .appointment-dialog[open] {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+}
+
+/* The scrim: the page's own near-black teal, as a flat tint. No blur, so the
+   panel reads as a lit surface rather than a pane of frosted glass. */
+.appointment-dialog::backdrop {
+  background-color: rgba(7, 25, 19, 0);
+  transition:
+    background-color 0.26s ease,
+    display 0.26s allow-discrete,
+    overlay 0.26s allow-discrete;
+}
+
+.appointment-dialog[open]::backdrop {
+  background-color: rgba(7, 25, 19, 0.72);
+}
+
+@starting-style {
+  .appointment-dialog[open]::backdrop {
+    background-color: rgba(7, 25, 19, 0);
+  }
+}
+
+/* The section's signature mark, carried onto the dialog's top edge. Solid, not
+   a gradient, and nothing glows. */
+.appointment-dialog::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 1;
+  height: 4px;
+  background-color: var(--loc-teal);
+}
+
+/* Anchored to the dialog rather than the scrolling body, so it can never scroll
+   out of reach on a short screen. */
+.appointment-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--loc-line);
+  border-radius: 50%;
+  background-color: var(--loc-panel);
+  color: var(--loc-slate);
+  cursor: pointer;
+  transition: background-color 0.22s ease, border-color 0.22s ease, color 0.22s ease;
+}
+
+.appointment-close:hover {
+  border-color: rgba(7, 158, 170, 0.35);
+  background-color: var(--loc-chip);
+  color: var(--loc-teal-deep);
+}
+
+.appointment-close:focus-visible {
+  outline: 3px solid rgba(7, 158, 170, 0.5);
+  outline-offset: 3px;
+}
+
+.appointment-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* The only scrolling region: a tall form scrolls inside the panel, never the
+   page behind it. */
+.appointment-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: clamp(26px, 3.6vw, 34px);
+}
+
+.appointment-head {
+  padding-right: 46px; /* keeps the copy clear of the close button */
+}
+
+.appointment-title {
+  margin: 0;
+  color: var(--loc-navy);
+  font-size: clamp(22px, 2.5vw, 27px);
+  font-weight: 700;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+}
+
+.appointment-sub {
+  margin: 8px 0 0;
+  color: var(--loc-slate);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.appointment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.appointment-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.appointment-label {
+  color: var(--loc-navy);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.appointment-input {
+  width: 100%;
+  min-height: 48px; /* comfortable on a touchscreen */
+  padding: 12px 14px;
+  border: 1px solid var(--loc-line);
+  border-radius: 10px;
+  background-color: var(--loc-ivory);
+  color: var(--loc-navy);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.appointment-input::placeholder {
+  color: #7c8ea0; /* a slate tint: clearly secondary, still legible */
+  font-weight: 400;
+}
+
+.appointment-input:hover {
+  border-color: #cbd8d7;
+}
+
+.appointment-input:focus {
+  outline: none;
+  border-color: var(--loc-teal);
+  background-color: var(--loc-panel);
+  box-shadow: 0 0 0 3px rgba(7, 158, 170, 0.18);
+}
+
+/* Invalid state: one new colour, because the site's palette has no danger tone.
+   #b42318 clears AA on white (5.4:1). */
+.appointment-input[aria-invalid="true"] {
+  border-color: #b42318;
+}
+
+.appointment-input[aria-invalid="true"]:focus {
+  border-color: #b42318;
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.16);
+}
+
+/* The dropdown. The native arrow is replaced with a real inline SVG so the
+   control matches the site's icon style — and so no background-image is ever
+   introduced inside #location-section. */
+.appointment-select-wrap {
+  position: relative;
+  display: block;
+}
+
+.appointment-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 46px;
+  cursor: pointer;
+}
+
+.appointment-select-chevron {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  color: var(--loc-teal-deep);
+  pointer-events: none;
+}
+
+.appointment-select-chevron svg {
+  width: 18px;
+  height: 18px;
+}
+
+.appointment-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.appointment-error[hidden] {
+  display: none;
+}
+
+/* The site's primary action, restated on this surface: deep teal, white label,
+   10px radius, one restrained shadow, the same hover as the clinic card's
+   "Get Directions on Google Maps". */
+.appointment-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 50px;
+  margin-top: 2px;
+  padding: 14px 22px;
+  border: none;
+  border-radius: 10px;
+  background-color: var(--loc-teal-deep);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  box-shadow:
+    0 1px 2px rgba(24, 48, 71, 0.1),
+    0 12px 24px -14px rgba(8, 126, 136, 0.7);
+  transition: background-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+}
+
+.appointment-submit:hover {
+  background-color: var(--loc-teal-darker);
+  box-shadow:
+    0 1px 2px rgba(24, 48, 71, 0.12),
+    0 16px 28px -14px rgba(5, 106, 116, 0.75);
+  transform: translateY(-1px);
+}
+
+.appointment-submit:focus-visible {
+  outline: 3px solid rgba(7, 158, 170, 0.5);
+  outline-offset: 3px;
+}
+
+.appointment-submit:active {
+  transform: none;
+}
+
+/* Loading state: the label swaps and a small ring spins beside it. */
+.appointment-submit.is-loading {
+  cursor: progress;
+}
+
+.appointment-spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+}
+
+.appointment-submit.is-loading .appointment-spinner {
+  display: block;
+  animation: appointmentSpin 0.7s linear infinite;
+}
+
+@keyframes appointmentSpin {
+  to { transform: rotate(360deg); }
+}
+
+.appointment-note {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--loc-slate);
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.appointment-note svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  color: var(--loc-teal-deep);
+}
+
+/* Phones: tighter gutters, and the panel keeps its own internal scroll. */
+@media (max-width: 560px) {
+  .appointment-dialog {
+    width: calc(100vw - 24px);
+    max-height: min(90vh, 720px);
+  }
+
+  .appointment-body {
+    padding: 24px 20px 22px;
+  }
+
+  .appointment-head {
+    padding-right: 42px;
+  }
+}
+
+/* Short landscape viewports: the panel never outgrows the screen. */
+@media (max-height: 560px) {
+  .appointment-dialog {
+    max-height: calc(100vh - 24px);
+  }
+}
+
+/* Page scroll lock while the dialog is open. The scrollbar gutter is reserved
+   permanently on <html>, so nothing shifts by a pixel when it goes on. */
+html.appt-open {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appointment-dialog,
+  .appointment-dialog::backdrop {
+    transition: none !important; /* opens and closes instantly */
+  }
+
+  .appointment-close,
+  .appointment-input,
+  .appointment-submit {
+    transition: none !important;
+  }
+
+  .appointment-submit:hover {
+    transform: none;
+  }
+
+  .appointment-submit.is-loading .appointment-spinner {
+    animation: none !important;
+  }
+}
