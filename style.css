@@ -248,8 +248,12 @@ body {
 @media (max-width: 420px) {
   #navbar,
   #navbar.nav-scrolled {
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  .nav-logo {
+    gap: 9px;
   }
 
   .nav-clinic-sub {
@@ -258,6 +262,14 @@ body {
 
   .nav-clinic-name {
     font-size: 14px;
+  }
+
+  /* Free up the width the full-size pill would need, without shrinking
+     the label or its calendar icon. */
+  .nav-cta-btn {
+    padding-left: 16px;
+    padding-right: 16px;
+    gap: 7px;
   }
 }
 
@@ -922,11 +934,11 @@ body {
   .pill-text {
     font-size: 12px;
   }
-  /* The cards sit directly beneath the headline, leaving the hand and
-     tooth completely unobstructed below them. */
+  /* The cards sit just below the headline with a clear breathing gap,
+     leaving the hand and tooth unobstructed beneath them. */
   .features-zone {
     align-items: flex-start;
-    padding-top: clamp(12px, 1.6vh, 16px);
+    padding-top: clamp(12px, 2vh, 18px);
   }
   #hero-content {
     padding-top: clamp(80px, 10vh, 104px);
@@ -1029,6 +1041,39 @@ body {
 @media (max-width: 960px) {
   .nav-links {
     display: none;
+  }
+
+  /* The logo may shrink and ellipsize, but the actions keep their full
+     width so the booking label and icon can never be clipped. */
+  #navbar {
+    column-gap: 10px;
+  }
+
+  .nav-logo {
+    min-width: 0;
+  }
+
+  .logo-tooth {
+    flex: none;
+  }
+
+  .nav-brand {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .nav-clinic-name,
+  .nav-clinic-sub {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-actions,
+  .nav-phone,
+  .nav-cta-btn {
+    flex: 0 0 auto;
   }
 
   .hero-specs-bar {
