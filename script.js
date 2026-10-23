@@ -8,6 +8,14 @@
   const CLINIC_FRAMES = 276;
   const CLINIC_DIR = 'ezgif-4a7fad58a20dd84f-jpg';
 
+  // The water-flosser sequence behind the doctor cards. 180 frames at
+  // 1280x720, 2.6 MB combined. It is never part of the initial page load.
+  const DENTIST_WATER_FRAMES = 180;
+  const DENTIST_WATER_DIR = 'water-flosser-jpg';
+  const DENTIST_WATER_KEYFRAME_STEP = 6;
+  const DENTIST_WATER_MAX_INFLIGHT = 4;
+  const DENTIST_WATER_LERP = 0.16;
+
   const LERP_FACTOR = 0.1; // Smooth interpolation
 
   // DOM Elements
@@ -41,6 +49,8 @@
 
   // Phase 5: Meet Your Dentist section (additive â€” plain flow between services and location)
   const dentistSection = document.getElementById('dentist-section');
+  const dentistFlosserCanvas = document.getElementById('dentist-flosser-canvas');
+  const dentistFlosserCtx = dentistFlosserCanvas ? dentistFlosserCanvas.getContext('2d') : null;
 
   // Progressive enhancement: entrance initial-states (CSS `html.js-anim`)
   // are only active when scripting runs AND the user has not requested
@@ -66,9 +76,23 @@ document.documentElement.classList.add('js');
   let clinicCurrentFrame = 0;
   let clinicLastRendered = -1;
 
+  // Dentist water-flosser cache and lazy loader. The state array avoids
+  // duplicate requests and lets the current scroll position jump the queue.
+  const dentistWaterFrames = new Array(DENTIST_WATER_FRAMES);
+  const dentistWaterState = new Array(DENTIST_WATER_FRAMES).fill(0);
+  const dentistWaterPriority = [];
+  const dentistWaterFill = [];
+  let dentistWaterTarget = 0;
+  let dentistWaterCurrent = 0;
+  let dentistWaterLastRendered = -1;
+  let dentistWaterNear = false;
+  let dentistWaterStarted = false;
+  let dentistWaterInFlight = 0;
+
   const padZero = (n) => String(n).padStart(3, '0');
   const getHeroPath = (i) => `${HERO_DIR}/ezgif-frame-${padZero(i + 1)}.jpg`;
   const getClinicPath = (i) => `${CLINIC_DIR}/ezgif-frame-${padZero(i + 1)}.jpg`;
+  const getDentistWaterPath = (i) => `${DENTIST_WATER_DIR}/ezgif-frame-${padZero(i + 1)}.jpg`;
 
   // â”€â”€â”€ Canvas Sizing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function resizeAllCanvases() {
@@ -683,6 +707,95 @@ document.documentElement.classList.add('js');
     if (slot.textContent.trim() !== year) slot.textContent = year;
   }
 
+  // --- Footer: lazy, muted background video -------------------------------
+  // The footage is decorative and only fetched once the footer approaches the
+  // viewport. The solid footer ground is the fallback until a frame is actually
+  // playing, and reduced-motion visitors never request the file at all.
+  function initFooterVideo() {
+    const footer = document.querySelector('.site-footer');
+    const video = footer ? footer.querySelector('.site-footer-video') : null;
+    if (!footer || !video) return;
+
+    const src = video.getAttribute('data-src');
+    if (!src) return;
+
+    let loaded = false;
+    let loading = false;
+    let failed = false;
+
+    const hide = () => footer.classList.remove('footer-video-on');
+
+    const start = () => {
+      if (!loaded || failed || motionQuery.matches) return;
+      video.muted = true;
+      video.playsInline = true;
+      video.loop = true;
+      const attempt = video.play();
+      if (attempt && typeof attempt.catch === 'function') {
+        attempt.catch(hide);
+      }
+    };
+
+    const load = () => {
+      if (loaded || loading || failed || motionQuery.matches) return;
+      loading = true;
+      video.src = src;
+      video.load();
+    };
+
+    video.addEventListener('loadeddata', () => {
+      loading = false;
+      loaded = true;
+      start();
+    }, { once: true });
+
+    video.addEventListener('playing', () => {
+      if (!motionQuery.matches) footer.classList.add('footer-video-on');
+    });
+
+    video.addEventListener('error', () => {
+      loading = false;
+      failed = true;
+      hide();
+      video.removeAttribute('src');
+      video.load();
+    }, { once: true });
+
+    const isNear = () => {
+      const rect = footer.getBoundingClientRect();
+      return rect.top < window.innerHeight + 300 && rect.bottom > -300;
+    };
+
+    if (typeof IntersectionObserver !== 'undefined') {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            if (loaded) video.pause();
+            return;
+          }
+          if (motionQuery.matches || failed) return;
+          if (!loaded) load();
+          else start();
+        });
+      }, { rootMargin: '300px 0px' });
+      observer.observe(footer);
+    } else if (!motionQuery.matches) {
+      load();
+    }
+
+    if (typeof motionQuery.addEventListener === 'function') {
+      motionQuery.addEventListener('change', () => {
+        if (motionQuery.matches) {
+          video.pause();
+          hide();
+        } else if (isNear()) {
+          if (!loaded && !failed) load();
+          else start();
+        }
+      });
+    }
+  }
+
   // --- Book Appointment dialog -------------------------------------------
   // One booking surface for the whole page: the navbar's "Book Visit" CTA and
   // each service card's "Book Treatment" link carry data-book-open and all open
@@ -1149,6 +1262,203 @@ document.documentElement.classList.add('js');
     observer.observe(dentistSection);
   }
 
+  // --- Dentist water-flosser backdrop -------------------------------------
+  // A single canvas scrubs a 180-frame sequence behind the profile panes.
+  // The sequence is 2.6 MB, so nothing is fetched at page load: the canvas
+  // paints the first frame from CSS, and this loader starts only once the
+  // section is within 700px of the viewport. Current-frame and every-sixth
+  // keyframes go first; the rest fill in four at a time. If the visitor
+  // scrolls, the live frame jumps the queue. No DOM is added per frame.
+  function renderDentistWater(index) {
+    if (!dentistFlosserCtx || !dentistFlosserCanvas) return;
+
+    const wanted = Math.max(0, Math.min(DENTIST_WATER_FRAMES - 1, Math.round(index)));
+    let source = -1;
+
+    if (dentistWaterState[wanted] === 4) {
+      source = wanted;
+    } else {
+      // Use the nearest already-loaded keyframe while the requested frame is
+      // still in flight. Prefer the forward neighbour on a tie.
+      for (let d = 1; d < DENTIST_WATER_FRAMES; d++) {
+        const ahead = wanted + d;
+        const behind = wanted - d;
+        if (ahead < DENTIST_WATER_FRAMES && dentistWaterState[ahead] === 4) {
+          source = ahead;
+          break;
+        }
+        if (behind >= 0 && dentistWaterState[behind] === 4) {
+          source = behind;
+          break;
+        }
+      }
+    }
+
+    if (source === -1 || source === dentistWaterLastRendered) return;
+
+    const img = dentistWaterFrames[source];
+    if (!img || !img.naturalWidth) return;
+
+    dentistFlosserCtx.drawImage(img, 0, 0, dentistFlosserCanvas.width, dentistFlosserCanvas.height);
+    dentistWaterLastRendered = source;
+  }
+
+  function updateDentistWaterTarget() {
+    if (!dentistSection) return;
+
+    const rect = dentistSection.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    if (!vh || !rect.height) return;
+
+    // 0 as the section begins to enter from the bottom, 1 as it leaves the
+    // top. At the moment the section fills the screen the sequence is around
+    // its middle, which is exactly when the spray is opening out behind the
+    // panes.
+    const progress = (vh - rect.top) / (vh + rect.height);
+    dentistWaterTarget = Math.min(1, Math.max(0, progress)) * (DENTIST_WATER_FRAMES - 1);
+
+    if (dentistWaterNear && dentistWaterStarted && !motionQuery.matches) {
+      queueDentistWaterFrame(Math.round(dentistWaterTarget), true, true);
+      pumpDentistWater();
+    }
+  }
+
+  function queueDentistWaterFrame(index, priority, front) {
+    if (index < 0 || index >= DENTIST_WATER_FRAMES) return;
+
+    const state = dentistWaterState[index];
+    if (state === 0) {
+      dentistWaterState[index] = priority ? 1 : 2;
+      if (priority) {
+        if (front) dentistWaterPriority.unshift(index);
+        else dentistWaterPriority.push(index);
+      } else {
+        dentistWaterFill.push(index);
+      }
+      return;
+    }
+
+    if (!priority) return;
+
+    // A frame already queued for background fill - or merely waiting behind
+    // older keyframes - can be promoted to the very front when it is the
+    // frame the visitor is actually looking at.
+    if (state === 2) {
+      const at = dentistWaterFill.indexOf(index);
+      if (at !== -1) dentistWaterFill.splice(at, 1);
+      dentistWaterState[index] = 1;
+      if (front) dentistWaterPriority.unshift(index);
+      else dentistWaterPriority.push(index);
+    } else if (state === 1 && front) {
+      const at = dentistWaterPriority.indexOf(index);
+      if (at > 0) {
+        dentistWaterPriority.splice(at, 1);
+        dentistWaterPriority.unshift(index);
+      }
+    }
+  }
+
+  function pumpDentistWater() {
+    if (!dentistWaterStarted || !dentistWaterNear || motionQuery.matches) return;
+
+    while (dentistWaterInFlight < DENTIST_WATER_MAX_INFLIGHT) {
+      const index = dentistWaterPriority.length
+        ? dentistWaterPriority.shift()
+        : dentistWaterFill.shift();
+
+      if (index === undefined) return;
+      if (dentistWaterState[index] === 4 || dentistWaterState[index] === 5) continue;
+
+      dentistWaterState[index] = 3;
+      dentistWaterInFlight += 1;
+
+      const img = new Image();
+      dentistWaterFrames[index] = img;
+      img.decoding = 'async';
+
+      const finish = (ok) => {
+        dentistWaterInFlight = Math.max(0, dentistWaterInFlight - 1);
+        dentistWaterState[index] = ok ? 4 : 5;
+        if (ok && dentistWaterNear && !motionQuery.matches) {
+          renderDentistWater(dentistWaterCurrent);
+        }
+        pumpDentistWater();
+      };
+
+      img.onload = () => finish(true);
+      img.onerror = () => {
+        console.warn('Water-flosser frame could not load', index + 1);
+        finish(false);
+      };
+      img.src = getDentistWaterPath(index);
+    }
+  }
+
+  function startDentistWater() {
+    if (dentistWaterStarted || motionQuery.matches || !dentistFlosserCtx) return;
+
+    dentistWaterStarted = true;
+    dentistWaterCurrent = dentistWaterTarget;
+
+    // The frame the visitor is at, then frame zero, then the coarse keyframes
+    // that let the scrub read smoothly before the full sequence has arrived.
+    queueDentistWaterFrame(Math.round(dentistWaterTarget), true);
+    queueDentistWaterFrame(0, true);
+    for (let i = 0; i < DENTIST_WATER_FRAMES; i += DENTIST_WATER_KEYFRAME_STEP) {
+      queueDentistWaterFrame(i, true);
+    }
+    queueDentistWaterFrame(DENTIST_WATER_FRAMES - 1, true);
+
+    // Everything else is background fill; it only runs while the section is
+    // near, and any frame promoted by scrolling overtakes it.
+    for (let i = 0; i < DENTIST_WATER_FRAMES; i++) {
+      queueDentistWaterFrame(i, false);
+    }
+
+    pumpDentistWater();
+  }
+
+  function initDentistWater() {
+    if (!dentistSection || !dentistFlosserCanvas || !dentistFlosserCtx) return;
+
+    dentistFlosserCtx.imageSmoothingEnabled = true;
+    dentistFlosserCtx.imageSmoothingQuality = 'high';
+    updateDentistWaterTarget();
+
+    // Without IntersectionObserver the CSS still image remains the fallback;
+    // never pull the sequence on a browser that cannot scrub it.
+    if (typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        dentistWaterNear = entry.isIntersecting;
+        if (!dentistWaterNear) return;
+        if (motionQuery.matches) return;
+
+        updateDentistWaterTarget();
+        startDentistWater();
+        dentistWaterCurrent = dentistWaterTarget;
+        renderDentistWater(dentistWaterCurrent);
+        pumpDentistWater();
+      });
+    }, { rootMargin: '700px 0px' });
+    observer.observe(dentistSection);
+
+    // If the visitor turns reduced motion off during the visit, begin only
+    // then; turning it on simply freezes the last frame (or leaves the CSS
+    // still frame visible if nothing has loaded yet).
+    if (typeof motionQuery.addEventListener === 'function') {
+      motionQuery.addEventListener('change', () => {
+        if (motionQuery.matches || !dentistWaterNear) return;
+        updateDentistWaterTarget();
+        startDentistWater();
+        dentistWaterCurrent = dentistWaterTarget;
+        renderDentistWater(dentistWaterCurrent);
+        pumpDentistWater();
+      });
+    }
+  }
+
   // â”€â”€â”€ Scroll Event Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function handleScroll() {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
@@ -1201,7 +1511,12 @@ document.documentElement.classList.add('js');
       clinicTargetFrame = progress * (CLINIC_FRAMES - 1);
     }
 
-    // 5. Navbar scroll style
+    // 5. Dentist water-flosser progress. Loading and drawing are gated by
+    //    the section observer, so this is only a cheap rect read while the
+    //    rest of the page scrolls.
+    updateDentistWaterTarget();
+
+    // 6. Navbar scroll style
     if (navbar) {
       if (scrollTop > 40) {
         navbar.classList.add('nav-scrolled');
@@ -1235,6 +1550,19 @@ document.documentElement.classList.add('js');
     const cFrame = Math.round(clinicCurrentFrame);
     if (cFrame !== clinicLastRendered) {
       renderClinic(cFrame);
+    }
+
+    // Dentist water-flosser LERP. It runs only while the section is near and
+    // the frames have been given permission to load; otherwise the canvas
+    // simply holds its last frame.
+    if (dentistWaterNear && dentistWaterStarted && !motionQuery.matches) {
+      const wDelta = dentistWaterTarget - dentistWaterCurrent;
+      if (Math.abs(wDelta) > 0.5) {
+        dentistWaterCurrent += wDelta * DENTIST_WATER_LERP;
+      } else {
+        dentistWaterCurrent = dentistWaterTarget;
+      }
+      renderDentistWater(dentistWaterCurrent);
     }
 
     requestAnimationFrame(animationLoop);
@@ -1349,7 +1677,9 @@ document.documentElement.classList.add('js');
   initServicesFootage();
   initLocationReveal();
   initFooterYear();
+  initFooterVideo();
   initAppointmentDialog();
+  initDentistWater();
   initDentistReveal();
   requestAnimationFrame(animationLoop);
 })();
