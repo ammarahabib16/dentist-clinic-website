@@ -807,6 +807,12 @@ body {
 }
 
 @media (max-width: 768px) {
+  .clinic-overlay-wrap {
+    /* Clear the fixed navbar before the heading starts. The old 20px
+       overlay padding put the first line behind the 67px bar. */
+    padding-top: calc(92px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
   .clinic-masthead {
     padding-top: 52px;
     justify-content: center;
@@ -815,11 +821,14 @@ body {
   }
   .clinic-hero-headline {
     position: static;
-    margin: 20px auto 0;
+    margin: 8px auto 0;
     text-align: center;
     max-width: 100%;
-    padding: 12px 16px 16px;
+    padding: 8px 12px 16px;
     overflow: visible;
+  }
+  .clinic-subtitle {
+    margin-top: 16px;
   }
 }
 
@@ -864,6 +873,24 @@ body {
 }
 
 @media (max-width: 768px) {
+  /* Use the visible mobile viewport, not the browser's full 100vh, so the
+     bottom description and CTA stay above the URL bar. Let the overlay grow
+     if its content ever needs more room than that minimum. */
+  .hero-overlay-wrap {
+    bottom: auto;
+    height: auto;
+    min-height: 100svh;
+  }
+  #hero-content {
+    min-height: 100svh;
+    padding-bottom: max(clamp(28px, 4vh, 48px), calc(16px + env(safe-area-inset-bottom, 0px)));
+  }
+  /* Move the centred hand down just enough to preserve clear air beneath
+     the enlarged feature cards on short phones. script.js eases this back
+     to zero as the hero copy fades, so the cinematic bridge stays aligned. */
+  #hero-canvas {
+    translate: 0 var(--hero-canvas-shift, 24px);
+  }
   .pills-row {
     grid-template-columns: max-content max-content;
     grid-template-rows: auto auto;
@@ -899,7 +926,7 @@ body {
      tooth completely unobstructed below them. */
   .features-zone {
     align-items: flex-start;
-    padding-top: 0;
+    padding-top: clamp(12px, 1.6vh, 16px);
   }
   #hero-content {
     padding-top: clamp(80px, 10vh, 104px);
@@ -918,7 +945,7 @@ body {
    of the hand. Taller tablets keep the roomier mobile pill. */
 @media (max-width: 768px) and (max-height: 960px) {
   .pills-row {
-    gap: 6px 10px;
+    gap: 8px 10px;
   }
   .feature-pill {
     padding: 2.5px 13px;
@@ -947,7 +974,7 @@ body {
     padding-top: 60px;
   }
   .pills-row {
-    gap: 2px 8px;
+    gap: 6px 8px;
   }
   .feature-pill {
     padding: 1px 11px;

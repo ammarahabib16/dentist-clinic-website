@@ -1470,10 +1470,16 @@ document.documentElement.classList.add('js');
       const progress = Math.min(Math.max((scrollTop - heroDocTop) / heroScrubDist, 0), 1);
       heroTargetFrame = progress * (HERO_FRAMES - 1);
 
-      // Hero UI smooth fade over the first 480px
+      // Hero UI smooth fade over the first 480px. The mobile hand offset
+      // introduced in CSS eases out over the same window, so it disappears
+      // before the matched hero-to-clinic bridge begins.
+      const fadeDist = 480;
+      const fadeRatio = Math.min(Math.max(-rect.top / fadeDist, 0), 1);
+      heroSection.style.setProperty(
+        '--hero-canvas-shift',
+        `${(24 * (1 - fadeRatio)).toFixed(1)}px`
+      );
       if (heroContent) {
-        const fadeDist = 480;
-        const fadeRatio = Math.min(Math.max(-rect.top / fadeDist, 0), 1);
         const opacity = (1 - fadeRatio).toFixed(3);
         heroContent.style.opacity = opacity;
         heroContent.style.transform = `translateY(${-fadeRatio * 45}px)`;
