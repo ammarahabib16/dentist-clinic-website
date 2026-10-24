@@ -2,11 +2,27 @@
   'use strict';
 
   // â”€â”€â”€ Sequence Configurations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const HERO_FRAMES = 285;
-  const HERO_DIR = 'ezgif-87eb4f2fc51a57fe-jpg';
+  // The hero is one scroll-scrubbed video. hero-section-scrub.mp4 is a 720p
+  // scrub encode with a keyframe every 0.2s and faststart enabled; the original
+  // source stays on disk for rollback. Narrow viewports keep the first-frame
+  // poster because the optimized file still trails fast mobile scrolls by
+  // roughly a quarter second. Remove this guard to opt mobile into video.
+  const HERO_VIDEO_STATIC_QUERY = '(max-width: 768px)';
+  const HERO_VIDEO_FPS = 30;
+  const HERO_VIDEO_END_PAD = 1 / HERO_VIDEO_FPS;
+  const HERO_SEEK_EPSILON = 0.02;
 
-  const CLINIC_FRAMES = 276;
-  const CLINIC_DIR = 'ezgif-4a7fad58a20dd84f-jpg';
+  // The clinic scene is also one scroll-scrubbed video now. The encode keeps
+  // a keyframe every 0.2s for fast reverse seeking and has no audio track.
+  // Narrow viewports keep the poster because video seeking trails fast mobile
+  // scrolls; the old frame sequence stays on disk for rollback.
+  const CLINIC_VIDEO_STATIC_QUERY = '(max-width: 768px)';
+  const CLINIC_VIDEO_FPS = 30;
+  const CLINIC_VIDEO_END_PAD = 1 / CLINIC_VIDEO_FPS;
+  const CLINIC_SEEK_EPSILON = 0.02;
+  // A seek that jumps several seconds can take longer than a frame or two in
+  // a cold decoder. This is a genuine-stall guard, not a frame budget.
+  const CLINIC_SEEK_TIMEOUT = 2500;
 
   // The water-flosser sequence behind the doctor cards. 180 frames at
   // 1280x720, 2.6 MB combined. It is never part of the initial page load.
@@ -16,18 +32,16 @@
   const DENTIST_WATER_MAX_INFLIGHT = 4;
   const DENTIST_WATER_LERP = 0.16;
 
-  const LERP_FACTOR = 0.1; // Smooth interpolation
-
   // DOM Elements
   const heroSection = document.getElementById('hero-section');
-  const heroCanvas = document.getElementById('hero-canvas');
-  const heroCtx = heroCanvas ? heroCanvas.getContext('2d', { alpha: false }) : null;
+  const heroMedia = document.getElementById('hero-media');
+  const heroVideo = document.getElementById('hero-video');
   const heroContent = document.getElementById('hero-content');
   const heroScrollPrompt = document.getElementById('hero-scroll-prompt');
 
   const clinicSection = document.getElementById('clinic-section');
-  const clinicCanvas = document.getElementById('clinic-canvas');
-  const clinicCtx = clinicCanvas ? clinicCanvas.getContext('2d', { alpha: false }) : null;
+  const clinicMedia = document.getElementById('clinic-media');
+  const clinicVideo = document.getElementById('clinic-video');
   const clinicViewport = clinicSection ? clinicSection.querySelector('.sticky-viewport') : null;
   const clinicOverlay = document.getElementById('clinic-overlay');
   const clinicBloom = document.getElementById('clinic-bloom');
@@ -61,20 +75,33 @@ document.documentElement.classList.add('js');
 
   const navbar = document.getElementById('navbar');
 
-  // Frame Caches
-  const heroFrames = new Array(HERO_FRAMES);
-  const heroLoaded = new Array(HERO_FRAMES).fill(false);
+  // Hero video scrub state. Seeks are serialised: scroll updates only change
+  // heroProgress; one rAF-coalesced seek is in flight at a time, and the next
+  // one is issued from `seeked` if the target moved again.
+  let heroProgress = 0;
+  let heroVideoDuration = 0;
+  let heroVideoReady = false;
+  let heroVideoEnabled = false;
+  let heroVideoFailed = false;
+  let heroVideoSeeking = false;
+  let heroVideoSeekScheduled = false;
+  let heroVideoLastSeekTime = -1;
+  let heroVideoListenersBound = false;
+  let heroVideoSeekTimeout = 0;
 
-  const clinicFrames = new Array(CLINIC_FRAMES);
-  const clinicLoaded = new Array(CLINIC_FRAMES).fill(false);
-
-  let heroTargetFrame = 0;
-  let heroCurrentFrame = 0;
-  let heroLastRendered = -1;
-
-  let clinicTargetFrame = 0;
-  let clinicCurrentFrame = 0;
-  let clinicLastRendered = -1;
+  // Clinic video scrub state, deliberately separate from the hero so the
+  // existing hero path stays untouched. The same serialised-seek contract
+  // applies: scroll stores progress, then at most one seek is in flight.
+  let clinicProgress = 0;
+  let clinicVideoDuration = 0;
+  let clinicVideoReady = false;
+  let clinicVideoEnabled = false;
+  let clinicVideoFailed = false;
+  let clinicVideoSeeking = false;
+  let clinicVideoSeekScheduled = false;
+  let clinicVideoLastSeekTime = -1;
+  let clinicVideoListenersBound = false;
+  let clinicVideoSeekTimeout = 0;
 
   // Dentist water-flosser cache and lazy loader. The state array avoids
   // duplicate requests and lets the current scroll position jump the queue.
@@ -90,101 +117,321 @@ document.documentElement.classList.add('js');
   let dentistWaterInFlight = 0;
 
   const padZero = (n) => String(n).padStart(3, '0');
-  const getHeroPath = (i) => `${HERO_DIR}/ezgif-frame-${padZero(i + 1)}.jpg`;
-  const getClinicPath = (i) => `${CLINIC_DIR}/ezgif-frame-${padZero(i + 1)}.jpg`;
   const getDentistWaterPath = (i) => `${DENTIST_WATER_DIR}/ezgif-frame-${padZero(i + 1)}.jpg`;
 
   // â”€â”€â”€ Canvas Sizing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  function resizeAllCanvases() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = Math.round(window.innerWidth * dpr);
-    const h = Math.round(window.innerHeight * dpr);
-
-    if (heroCanvas && heroCtx) {
-      heroCanvas.width = w;
-      heroCanvas.height = h;
-      heroCtx.imageSmoothingEnabled = true;
-      heroCtx.imageSmoothingQuality = 'high';
-      renderHero(Math.max(0, heroLastRendered));
-    }
-
-    if (clinicCanvas && clinicCtx) {
-      clinicCanvas.width = w;
-      clinicCanvas.height = h;
-      clinicCtx.imageSmoothingEnabled = true;
-      clinicCtx.imageSmoothingQuality = 'high';
-      renderClinic(Math.max(0, clinicLastRendered));
-    }
-  }
 
   // â”€â”€â”€ Cover Fit Drawing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  function drawImageCover(ctx, canvas, img) {
-    const cw = canvas.width;
-    const ch = canvas.height;
-    const iw = img.naturalWidth || img.width;
-    const ih = img.naturalHeight || img.height;
-    if (!iw || !ih) return;
-
-    const imgRatio = iw / ih;
-    const canvasRatio = cw / ch;
-    let dw, dh, dx, dy;
-
-    if (canvasRatio > imgRatio) {
-      dw = cw;
-      dh = cw / imgRatio;
-      dx = 0;
-      dy = (ch - dh) / 2;
-    } else {
-      dh = ch;
-      dw = ch * imgRatio;
-      dx = (cw - dw) / 2;
-      dy = 0;
-    }
-
-    ctx.drawImage(img, dx, dy, dw, dh);
-  }
 
   // â”€â”€â”€ Nearest Loaded Frame Fallbacks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  function getNearestHeroFrame(target) {
-    if (heroLoaded[target] && heroFrames[target]) return heroFrames[target];
-    for (let offset = 1; offset < HERO_FRAMES; offset++) {
-      const prev = target - offset;
-      if (prev >= 0 && heroLoaded[prev] && heroFrames[prev]) return heroFrames[prev];
-      const next = target + offset;
-      if (next < HERO_FRAMES && heroLoaded[next] && heroFrames[next]) return heroFrames[next];
-    }
-    return null;
-  }
-
-  function getNearestClinicFrame(target) {
-    if (clinicLoaded[target] && clinicFrames[target]) return clinicFrames[target];
-    for (let offset = 1; offset < CLINIC_FRAMES; offset++) {
-      const prev = target - offset;
-      if (prev >= 0 && clinicLoaded[prev] && clinicFrames[prev]) return clinicFrames[prev];
-      const next = target + offset;
-      if (next < CLINIC_FRAMES && clinicLoaded[next] && clinicFrames[next]) return clinicFrames[next];
-    }
-    return null;
-  }
 
   // â”€â”€â”€ Render Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  function renderHero(index) {
-    if (!heroCanvas || !heroCtx) return;
-    const clamped = Math.max(0, Math.min(HERO_FRAMES - 1, Math.round(index)));
-    const img = getNearestHeroFrame(clamped);
-    if (img && (img.complete || img.naturalWidth > 0)) {
-      drawImageCover(heroCtx, heroCanvas, img);
-      heroLastRendered = clamped;
+
+  // â”€â”€â”€ Hero Video Scrub â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // A single paused video is driven by scroll position. We never autoplay:
+  // each scroll frame updates heroProgress, and at most one rAF-coalesced seek
+  // is in flight. When that seek lands, `seeked` issues the next one only if
+  // the target has moved, so a fast scroll cannot queue dozens of stale seeks.
+  function onHeroVideoMetadata() {
+    heroVideoDuration = Number.isFinite(heroVideo.duration) ? heroVideo.duration : 0;
+    if (heroVideoDuration <= 0) {
+      onHeroVideoError();
+      return;
+    }
+    if (!heroVideoReady) scheduleHeroVideoUpdate();
+  }
+
+  function onHeroVideoReady() {
+    if (!heroMedia || heroVideoFailed || !heroVideoEnabled || motionQuery.matches) return;
+    if (!heroVideoReady) {
+      heroVideoReady = true;
+      heroMedia.classList.add('is-video-ready');
+    }
+    scheduleHeroVideoUpdate();
+  }
+
+  function onHeroVideoError() {
+    if (heroVideoFailed) return;
+    heroVideoFailed = true;
+    heroVideoEnabled = false;
+    heroVideoReady = false;
+    heroVideoSeeking = false;
+    if (heroVideoSeekTimeout) {
+      clearTimeout(heroVideoSeekTimeout);
+      heroVideoSeekTimeout = 0;
+    }
+    if (heroMedia) {
+      heroMedia.classList.remove('is-video-ready');
+      heroMedia.classList.add('hero-video-failed');
     }
   }
 
-  function renderClinic(index) {
-    if (!clinicCanvas || !clinicCtx) return;
-    const clamped = Math.max(0, Math.min(CLINIC_FRAMES - 1, Math.round(index)));
-    const img = getNearestClinicFrame(clamped);
-    if (img && (img.complete || img.naturalWidth > 0)) {
-      drawImageCover(clinicCtx, clinicCanvas, img);
-      clinicLastRendered = clamped;
+  function onHeroVideoSeeked() {
+    if (heroVideoSeekTimeout) {
+      clearTimeout(heroVideoSeekTimeout);
+      heroVideoSeekTimeout = 0;
+    }
+    heroVideoSeeking = false;
+    scheduleHeroVideoUpdate();
+  }
+
+  function scheduleHeroVideoUpdate() {
+    if (!heroVideoEnabled || heroVideoFailed || !heroVideoReady || heroVideoDuration <= 0) return;
+    if (heroVideoSeeking || heroVideoSeekScheduled) return;
+
+    heroVideoSeekScheduled = true;
+    requestAnimationFrame(() => {
+      heroVideoSeekScheduled = false;
+      if (!heroVideoEnabled || heroVideoFailed || !heroVideoReady || heroVideoSeeking) return;
+
+      const lastFrameTime = Math.max(0, heroVideoDuration - HERO_VIDEO_END_PAD);
+      const target = Math.min(Math.max(heroProgress * lastFrameTime, 0), lastFrameTime);
+      if (Math.abs(target - heroVideoLastSeekTime) < HERO_SEEK_EPSILON) return;
+      if (Math.abs(target - heroVideo.currentTime) < HERO_SEEK_EPSILON) {
+        heroVideoLastSeekTime = target;
+        return;
+      }
+
+      heroVideoSeeking = true;
+      heroVideoLastSeekTime = target;
+      heroVideoSeekTimeout = setTimeout(() => {
+        heroVideoSeekTimeout = 0;
+        if (!heroVideoSeeking) return;
+        heroVideoSeeking = false;
+        onHeroVideoError();
+      }, 1200);
+
+      try {
+        heroVideo.currentTime = target;
+      } catch (error) {
+        heroVideoSeeking = false;
+        if (heroVideoSeekTimeout) {
+          clearTimeout(heroVideoSeekTimeout);
+          heroVideoSeekTimeout = 0;
+        }
+        onHeroVideoError();
+      }
+    });
+  }
+
+  function startHeroVideo() {
+    if (!heroVideo || !heroMedia || heroVideoFailed) return;
+    if (motionQuery.matches) return;
+
+    heroVideoEnabled = true;
+    if (!heroVideoListenersBound) {
+      heroVideoListenersBound = true;
+      heroVideo.addEventListener('loadedmetadata', onHeroVideoMetadata);
+      heroVideo.addEventListener('loadeddata', onHeroVideoReady);
+      heroVideo.addEventListener('canplay', onHeroVideoReady);
+      heroVideo.addEventListener('error', onHeroVideoError);
+      heroVideo.addEventListener('seeking', () => { heroVideoSeeking = true; });
+      heroVideo.addEventListener('seeked', onHeroVideoSeeked);
+    }
+
+    if (!heroVideo.getAttribute('src')) {
+      const src = heroVideo.getAttribute('data-src');
+      if (!src) {
+        onHeroVideoError();
+        return;
+      }
+      heroVideo.muted = true;
+      heroVideo.playsInline = true;
+      heroVideo.preload = 'metadata';
+      heroVideo.src = src;
+      heroVideo.load();
+    } else if (heroVideoReady) {
+      heroMedia.classList.add('is-video-ready');
+      scheduleHeroVideoUpdate();
+    }
+  }
+
+  function stopHeroVideo() {
+    heroVideoEnabled = false;
+    heroVideoSeeking = false;
+    if (heroVideoSeekTimeout) {
+      clearTimeout(heroVideoSeekTimeout);
+      heroVideoSeekTimeout = 0;
+    }
+    if (heroVideo) heroVideo.pause();
+    if (heroMedia) heroMedia.classList.remove('is-video-ready');
+  }
+
+  function initHeroVideo() {
+    if (!heroVideo || !heroMedia) return;
+    const staticWidth = window.matchMedia(HERO_VIDEO_STATIC_QUERY);
+    if (!motionQuery.matches && !staticWidth.matches) startHeroVideo();
+    if (typeof motionQuery.addEventListener === 'function') {
+      motionQuery.addEventListener('change', () => {
+        if (motionQuery.matches) {
+          stopHeroVideo();
+        } else if (!staticWidth.matches) {
+          startHeroVideo();
+        }
+      });
+    }
+    if (typeof staticWidth.addEventListener === 'function') {
+      staticWidth.addEventListener('change', () => {
+        if (staticWidth.matches) {
+          stopHeroVideo();
+        } else if (!motionQuery.matches) {
+          startHeroVideo();
+        }
+      });
+    }
+  }
+
+  // ─── Clinic Video Scrub ────────────────────────────────────────────────
+  // The clinic uses the same paused-video contract as the hero, but with its
+  // own state and timeline. Scroll progress is held at 0 through the bridge,
+  // then maps the unchanged clinic pin range across the video. One seek is in
+  // flight at a time; `seeked` only asks for another if scroll moved again.
+  function onClinicVideoMetadata() {
+    clinicVideoDuration = Number.isFinite(clinicVideo.duration) ? clinicVideo.duration : 0;
+    if (clinicVideoDuration <= 0) {
+      onClinicVideoError();
+      return;
+    }
+    if (!clinicVideoReady) scheduleClinicVideoUpdate();
+  }
+
+  function onClinicVideoReady() {
+    if (!clinicMedia || clinicVideoFailed || !clinicVideoEnabled || motionQuery.matches) return;
+    if (!clinicVideoReady) {
+      clinicVideoReady = true;
+      clinicMedia.classList.add('is-video-ready');
+    }
+    scheduleClinicVideoUpdate();
+  }
+
+  function onClinicVideoError() {
+    if (clinicVideoFailed) return;
+    clinicVideoFailed = true;
+    clinicVideoEnabled = false;
+    clinicVideoReady = false;
+    clinicVideoSeeking = false;
+    if (clinicVideoSeekTimeout) {
+      clearTimeout(clinicVideoSeekTimeout);
+      clinicVideoSeekTimeout = 0;
+    }
+    if (clinicMedia) {
+      clinicMedia.classList.remove('is-video-ready');
+      clinicMedia.classList.add('clinic-video-failed');
+    }
+  }
+
+  function onClinicVideoSeeked() {
+    if (clinicVideoSeekTimeout) {
+      clearTimeout(clinicVideoSeekTimeout);
+      clinicVideoSeekTimeout = 0;
+    }
+    clinicVideoSeeking = false;
+    scheduleClinicVideoUpdate();
+  }
+
+  function scheduleClinicVideoUpdate() {
+    if (!clinicVideoEnabled || clinicVideoFailed || !clinicVideoReady || clinicVideoDuration <= 0) return;
+    if (clinicVideoSeeking || clinicVideoSeekScheduled) return;
+
+    clinicVideoSeekScheduled = true;
+    requestAnimationFrame(() => {
+      clinicVideoSeekScheduled = false;
+      if (!clinicVideoEnabled || clinicVideoFailed || !clinicVideoReady || clinicVideoSeeking) return;
+
+      const lastFrameTime = Math.max(0, clinicVideoDuration - CLINIC_VIDEO_END_PAD);
+      const target = Math.min(Math.max(clinicProgress * lastFrameTime, 0), lastFrameTime);
+      if (Math.abs(target - clinicVideoLastSeekTime) < CLINIC_SEEK_EPSILON) return;
+      if (Math.abs(target - clinicVideo.currentTime) < CLINIC_SEEK_EPSILON) {
+        clinicVideoLastSeekTime = target;
+        return;
+      }
+
+      clinicVideoSeeking = true;
+      clinicVideoLastSeekTime = target;
+      clinicVideoSeekTimeout = setTimeout(() => {
+        clinicVideoSeekTimeout = 0;
+        if (!clinicVideoSeeking) return;
+        clinicVideoSeeking = false;
+        onClinicVideoError();
+      }, CLINIC_SEEK_TIMEOUT);
+
+      try {
+        clinicVideo.currentTime = target;
+      } catch (error) {
+        clinicVideoSeeking = false;
+        if (clinicVideoSeekTimeout) {
+          clearTimeout(clinicVideoSeekTimeout);
+          clinicVideoSeekTimeout = 0;
+        }
+        onClinicVideoError();
+      }
+    });
+  }
+
+  function startClinicVideo() {
+    if (!clinicVideo || !clinicMedia || clinicVideoFailed || clinicVideoEnabled) return;
+    if (motionQuery.matches) return;
+
+    clinicVideoEnabled = true;
+    if (!clinicVideoListenersBound) {
+      clinicVideoListenersBound = true;
+      clinicVideo.addEventListener('loadedmetadata', onClinicVideoMetadata);
+      clinicVideo.addEventListener('loadeddata', onClinicVideoReady);
+      clinicVideo.addEventListener('canplay', onClinicVideoReady);
+      clinicVideo.addEventListener('error', onClinicVideoError);
+      clinicVideo.addEventListener('seeking', () => { clinicVideoSeeking = true; });
+      clinicVideo.addEventListener('seeked', onClinicVideoSeeked);
+    }
+
+    if (!clinicVideo.getAttribute('src')) {
+      const src = clinicVideo.getAttribute('data-src');
+      if (!src) {
+        onClinicVideoError();
+        return;
+      }
+      clinicVideo.muted = true;
+      clinicVideo.playsInline = true;
+      clinicVideo.preload = 'metadata';
+      clinicVideo.src = src;
+      clinicVideo.load();
+    } else if (clinicVideoReady) {
+      clinicMedia.classList.add('is-video-ready');
+      scheduleClinicVideoUpdate();
+    }
+  }
+
+  function stopClinicVideo() {
+    clinicVideoEnabled = false;
+    clinicVideoSeeking = false;
+    if (clinicVideoSeekTimeout) {
+      clearTimeout(clinicVideoSeekTimeout);
+      clinicVideoSeekTimeout = 0;
+    }
+    if (clinicVideo) clinicVideo.pause();
+    if (clinicMedia) clinicMedia.classList.remove('is-video-ready');
+  }
+
+  function initClinicVideo() {
+    if (!clinicVideo || !clinicMedia) return;
+    const staticWidth = window.matchMedia(CLINIC_VIDEO_STATIC_QUERY);
+    if (!motionQuery.matches && !staticWidth.matches) startClinicVideo();
+    if (typeof motionQuery.addEventListener === 'function') {
+      motionQuery.addEventListener('change', () => {
+        if (motionQuery.matches) {
+          stopClinicVideo();
+        } else if (!staticWidth.matches) {
+          startClinicVideo();
+        }
+      });
+    }
+    if (typeof staticWidth.addEventListener === 'function') {
+      staticWidth.addEventListener('change', () => {
+        if (staticWidth.matches) {
+          stopClinicVideo();
+        } else if (!motionQuery.matches) {
+          startClinicVideo();
+        }
+      });
     }
   }
 
@@ -229,8 +476,8 @@ document.documentElement.classList.add('js');
 
     // Hero frames play up to the bridge, then hold on their final frame.
     heroScrubDist = Math.max(1, bridgeStart - heroDocTop);
-    // Clinic frames hold on their opening frame through the bridge, then
-    // scrub across their own pin range at the original pacing.
+    // Clinic video holds on its opening frame through the bridge, then
+    // scrubs across its own pin range at the original pacing.
     clinicScrubStart = bridgeEnd;
     clinicScrubDist = Math.max(1, clinicBottom - vh - bridgeEnd);
   }
@@ -249,13 +496,13 @@ document.documentElement.classList.add('js');
     const dissolve = t * t * (3 - 2 * t);   // smoothstep cross-fade
     const settle = 1 - Math.pow(1 - t, 3);  // ease-out cubic settle
 
-    if (heroCanvas) {
-      heroCanvas.style.transform = t > 0
+    if (heroMedia) {
+      heroMedia.style.transform = t > 0
         ? `scale(${(1 + 0.055 * t * t).toFixed(4)})`
         : '';
     }
-    if (clinicCanvas) {
-      clinicCanvas.style.transform = t > 0
+    if (clinicMedia) {
+      clinicMedia.style.transform = t > 0
         ? `scale(${(1.09 - 0.09 * settle).toFixed(4)})`
         : '';
     }
@@ -285,7 +532,7 @@ document.documentElement.classList.add('js');
   // fully reversible, exactly like the hero â†’ clinic bridge.
   //
   // NOTE: three of the outgoing values (viewport opacity, pointer-events,
-  // canvas push-in) live on elements the hero â†’ clinic bridge ALSO writes
+  // media push-in) live on elements the hero â†’ clinic bridge ALSO writes
   // each frame, and that bridge runs first â€” so those are re-composed on
   // every scroll event. Values my code owns alone (bloom, header) are
   // memoised, so outside the hand-off window the new code writes nothing.
@@ -360,10 +607,10 @@ document.documentElement.classList.add('js');
       // Camera keeps travelling: the clinic pushes in as it dissolves â€” the
       // same 0 â†’ 1.055 dolly character as the hero â†’ clinic bridge. The
       // bridge rewrites this every frame, so it is re-asserted each event.
-      if (!reduced && clinicCanvas) {
+      if (!reduced && clinicMedia) {
         const pushStr = `scale(${(1 + 0.055 * t * t).toFixed(4)})`;
-        if (clinicCanvas.style.transform !== pushStr) {
-          clinicCanvas.style.transform = pushStr;
+        if (clinicMedia.style.transform !== pushStr) {
+          clinicMedia.style.transform = pushStr;
         }
       }
     }
@@ -1463,12 +1710,13 @@ document.documentElement.classList.add('js');
   function handleScroll() {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
 
-    // 1. Hero Sequence Progress â€” plays to its final frame exactly as the
-    //    bridge opens, then holds that frame beneath the clinic environment.
+    // 1. Hero video scrub â€” the timeline reaches its final frame exactly as
+    //    the bridge opens, then holds that frame beneath the clinic.
     if (heroSection) {
       const rect = heroSection.getBoundingClientRect();
       const progress = Math.min(Math.max((scrollTop - heroDocTop) / heroScrubDist, 0), 1);
-      heroTargetFrame = progress * (HERO_FRAMES - 1);
+      heroProgress = progress;
+      scheduleHeroVideoUpdate();
 
       // Hero UI smooth fade over the first 480px. The mobile hand offset
       // introduced in CSS eases out over the same window, so it disappears
@@ -1513,8 +1761,8 @@ document.documentElement.classList.add('js');
     // 4. Clinic Sequence Progress â€” held on its opening frame during the
     //    bridge, then scrubbed across its own pin range (pacing unchanged).
     if (clinicSection) {
-      const progress = Math.min(Math.max((scrollTop - clinicScrubStart) / clinicScrubDist, 0), 1);
-      clinicTargetFrame = progress * (CLINIC_FRAMES - 1);
+      clinicProgress = Math.min(Math.max((scrollTop - clinicScrubStart) / clinicScrubDist, 0), 1);
+      scheduleClinicVideoUpdate();
     }
 
     // 5. Dentist water-flosser progress. Loading and drawing are gated by
@@ -1534,30 +1782,6 @@ document.documentElement.classList.add('js');
 
   // â”€â”€â”€ Dual Animation Loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function animationLoop() {
-    // Hero LERP
-    const hDelta = heroTargetFrame - heroCurrentFrame;
-    if (Math.abs(hDelta) > 0.5) {
-      heroCurrentFrame += hDelta * LERP_FACTOR;
-    } else {
-      heroCurrentFrame = heroTargetFrame;
-    }
-    const hFrame = Math.round(heroCurrentFrame);
-    if (hFrame !== heroLastRendered) {
-      renderHero(hFrame);
-    }
-
-    // Clinic LERP
-    const cDelta = clinicTargetFrame - clinicCurrentFrame;
-    if (Math.abs(cDelta) > 0.5) {
-      clinicCurrentFrame += cDelta * LERP_FACTOR;
-    } else {
-      clinicCurrentFrame = clinicTargetFrame;
-    }
-    const cFrame = Math.round(clinicCurrentFrame);
-    if (cFrame !== clinicLastRendered) {
-      renderClinic(cFrame);
-    }
-
     // Dentist water-flosser LERP. It runs only while the section is near and
     // the frames have been given permission to load; otherwise the canvas
     // simply holds its last frame.
@@ -1572,51 +1796,6 @@ document.documentElement.classList.add('js');
     }
 
     requestAnimationFrame(animationLoop);
-  }
-
-  // â”€â”€â”€ Preloading Strategy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  function preloadAllImages() {
-    // 1. Hero Preloader
-    function loadHero(i, cb) {
-      const img = new Image();
-      heroFrames[i] = img;
-      function onLoad() {
-        heroLoaded[i] = true;
-        if (cb) cb(img);
-        if (Math.round(heroCurrentFrame) === i) renderHero(i);
-      }
-      img.onload = onLoad;
-      img.onerror = () => console.warn('Hero frame fail', i);
-      img.src = getHeroPath(i);
-      if (img.complete && img.naturalWidth > 0) onLoad();
-    }
-
-    // 2. Clinic Preloader
-    function loadClinic(i, cb) {
-      const img = new Image();
-      clinicFrames[i] = img;
-      function onLoad() {
-        clinicLoaded[i] = true;
-        if (cb) cb(img);
-        if (Math.round(clinicCurrentFrame) === i) renderClinic(i);
-      }
-      img.onload = onLoad;
-      img.onerror = () => console.warn('Clinic frame fail', i);
-      img.src = getClinicPath(i);
-      if (img.complete && img.naturalWidth > 0) onLoad();
-    }
-
-    // Immediate first-frame paint for both
-    loadHero(0, () => renderHero(0));
-    loadClinic(0, () => renderClinic(0));
-
-    // Preload remaining frames
-    for (let i = 1; i < HERO_FRAMES; i++) {
-      loadHero(i);
-    }
-    for (let i = 1; i < CLINIC_FRAMES; i++) {
-      loadClinic(i);
-    }
   }
 
   // â”€â”€â”€ Touch / Click Interaction for Infographic Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1643,7 +1822,6 @@ document.documentElement.classList.add('js');
     measureBridge();
     measureServicesTransition(); // re-derive the hand-off window from layout
     measureCardOffsets();        // the grid may have wrapped to a new column count
-    resizeAllCanvases();
     handleScroll();
   }, { passive: true });
   window.addEventListener('scroll', handleScroll, { passive: true });
@@ -1674,9 +1852,9 @@ document.documentElement.classList.add('js');
 
   measureBridge();
   measureServicesTransition();
-  resizeAllCanvases();
   handleScroll();
-  preloadAllImages();
+  initHeroVideo();
+  initClinicVideo();
   initBadgeInteractions();
   initServicesReveal();
   initServicesSequence();

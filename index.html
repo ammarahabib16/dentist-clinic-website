@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=93">
+  <link rel="stylesheet" href="style.css?v=96">
 </head>
 
 <body>
@@ -17,9 +17,11 @@
   <!-- ░░ Sticky Global Navbar ░░ -->
   <nav id="navbar" aria-label="Primary navigation">
     <a href="#hero-section" class="nav-logo" aria-label="Dr. Syed Hashim Jamshed Bukhari Dental Clinic, Back to top">
-      <svg class="logo-tooth" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2C9.5 2 7.7 3.6 6.8 5.6C5.9 4.7 4.6 4.3 3.7 5.1C2.5 6.2 2.9 8.3 3.7 10C4.6 11.8 5.4 13.6 5.4 16.3C5.4 17.7 5.9 19.1 7.2 19.7C8.1 20.1 9 19.3 9.5 18.4C9.9 17.6 10.4 16.7 12 16.7C13.6 16.7 14.1 17.6 14.5 18.4C15 19.3 15.9 20.1 16.8 19.7C18.1 19.1 18.6 17.7 18.6 16.3C18.6 13.6 19.4 11.8 20.3 10C21.1 8.3 21.5 6.2 20.3 5.1C19.4 4.3 18.1 4.7 17.2 5.6C16.3 3.6 14.5 2 12 2Z"/>
-      </svg>
+      <picture class="logo-tooth">
+        <source media="(prefers-reduced-motion: reduce)" srcset="assets/bukhari-dental-logo-static.svg?v=1" type="image/svg+xml">
+        <source srcset="assets/bukhari-dental-logo.svg?v=1" type="image/svg+xml">
+        <img src="assets/bukhari-dental-logo-static-512.png?v=1" width="512" height="512" alt="" aria-hidden="true" draggable="false" decoding="async">
+      </picture>
       <span class="nav-brand">
         <span class="nav-clinic-name">Dr. Syed Hashim Jamshed</span>
         <span class="nav-clinic-sub">DENTAL CLINIC, KOHAT</span>
@@ -50,12 +52,18 @@
   </nav>
 
   <!-- ════════════════════════════════════════════════════════════════
-       SECTION 1: HERO SCROLL ANIMATION SEQUENCE
-       Sequence: ezgif-87eb4f2fc51a57fe-jpg (285 frames)
+       SECTION 1: HERO SCROLL ANIMATION
+       Scroll-scrubbed video: hero-section-scrub.mp4 (1280x720 scrub encode,
+       0.2s keyframes, faststart, no audio). The original hero-section.mp4
+       stays on disk for rollback, and the old frame sequence remains for
+       rollback; only its first frame is used here as the poster.
        ════════════════════════════════════════════════════════════════ -->
   <section id="hero-section" class="scroll-sequence-section" aria-label="Hero 3D Tooth Animation">
     <div class="sticky-viewport">
-      <canvas id="hero-canvas" class="sequence-canvas"></canvas>
+      <div id="hero-media" class="hero-media sequence-canvas" aria-hidden="true">
+        <img id="hero-poster" class="hero-poster" src="ezgif-87eb4f2fc51a57fe-jpg/ezgif-frame-001.jpg" alt="" draggable="false">
+        <video id="hero-video" class="hero-video" muted playsinline preload="metadata" disablepictureinpicture tabindex="-1" data-src="hero-section-scrub.mp4?v=1"></video>
+      </div>
 
       <!-- Hero Overlay UI -->
       <div id="hero-overlay" class="hero-overlay-wrap">
@@ -136,11 +144,17 @@
 
   <!-- ════════════════════════════════════════════════════════════════
        SECTION 2: NEXT SECTION (CLINICAL SUITE SCROLL ANIMATION)
-       Sequence: ezgif-4a7fad58a20dd84f-jpg (276 frames)
+       Scroll-scrubbed video: second-section-scrub.mp4 (1280x720 scrub encode,
+       0.2s keyframes, faststart, no audio). The original second-section.mp4
+       and the old ezgif-4a7fad58a20dd84f-jpg frame sequence stay on disk for
+       rollback; the first frame is used here as the compressed poster.
        ════════════════════════════════════════════════════════════════ -->
   <section id="clinic-section" class="scroll-sequence-section" aria-label="Clinical Operatory Animation">
     <div class="sticky-viewport">
-      <canvas id="clinic-canvas" class="sequence-canvas"></canvas>
+      <div id="clinic-media" class="clinic-media sequence-canvas" aria-hidden="true">
+        <img id="clinic-poster" class="clinic-poster" src="second-section-poster.jpg" alt="" draggable="false">
+        <video id="clinic-video" class="clinic-video" muted playsinline preload="metadata" disablepictureinpicture tabindex="-1" data-src="second-section-scrub.mp4?v=1"></video>
+      </div>
 
       <!-- Bridge bloom: soft light carried across the cinematic hand-off
            from the hero environment into this one (opacity: script.js) -->
@@ -671,7 +685,10 @@
         <div class="site-footer-brand">
           <p class="site-footer-logo">
             <span class="site-footer-mark" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M12 2C9.5 2 7.7 3.6 6.8 5.6C5.9 4.7 4.6 4.3 3.7 5.1C2.5 6.2 2.9 8.3 3.7 10C4.6 11.8 5.4 13.6 5.4 16.3C5.4 17.7 5.9 19.1 7.2 19.7C8.1 20.1 9 19.3 9.5 18.4C9.9 17.6 10.4 16.7 12 16.7C13.6 16.7 14.1 17.6 14.5 18.4C15 19.3 15.9 20.1 16.8 19.7C18.1 19.1 18.6 17.7 18.6 16.3C18.6 13.6 19.4 11.8 20.3 10C21.1 8.3 21.5 6.2 20.3 5.1C19.4 4.3 18.1 4.7 17.2 5.6C16.3 3.6 14.5 2 12 2Z"/></svg>
+              <picture>
+                <source srcset="assets/bukhari-dental-logo-static.svg?v=1" type="image/svg+xml">
+                <img src="assets/bukhari-dental-logo-static-512.png?v=1" width="512" height="512" alt="" draggable="false" decoding="async">
+              </picture>
             </span>
             <span class="site-footer-brand-text">
               <span class="site-footer-name">Dr. Syed Hashim Jamshed</span>
@@ -737,7 +754,7 @@
     </div>
   </footer>
 
-  <script src="script.js?v=55"></script>
+  <script src="script.js?v=57"></script>
 </body>
 
 </html>

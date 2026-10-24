@@ -90,9 +90,18 @@ body {
 }
 
 .logo-tooth {
-  width: 26px;
-  height: 26px;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+  display: block;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.28));
+}
+
+.logo-tooth img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 /* Nav links */
@@ -235,6 +244,26 @@ body {
 }
 
 /* Navbar responsive refinements (links already hide at ≤960px below) */
+@media (min-width: 961px) and (max-width: 1024px) {
+  /* Keep the full nav readable in the narrow desktop window just above
+     the link breakpoint. The 32px cap also gives the new logo mark room
+     to breathe beside the clinic name. */
+  #navbar,
+  #navbar.nav-scrolled {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .nav-links {
+    gap: 20px;
+  }
+
+  .nav-phone {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
 @media (max-width: 640px) {
   .nav-phone {
     display: none;
@@ -322,6 +351,98 @@ body {
      50% / 45% of frame in both boundary shots). */
   transform-origin: 50% 45%;
   will-change: transform;
+}
+
+/* Hero media layer: one video replaces the old 285-image canvas. The poster
+   underneath is the first frame, so the hero never starts black while the
+   metadata or first seek is loading. Both layers cover-fit exactly like the
+   canvas did, and neither can intercept the hero's UI. */
+.hero-media {
+  overflow: hidden;
+  background-color: #071913;
+  pointer-events: none;
+}
+
+.hero-poster,
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  pointer-events: none;
+}
+
+.hero-poster {
+  z-index: 0;
+}
+
+.hero-video {
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.hero-media.is-video-ready .hero-video {
+  opacity: 1;
+}
+
+.hero-media.hero-video-failed .hero-video {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-video {
+    display: none !important;
+  }
+}
+
+/* Clinic media layer: one video replaces the old 276-image canvas. The
+   poster is a compressed copy of the first frame, so the pinned clinic
+   scene never flashes the background while metadata or a seek is pending.
+   Both layers cover-fit exactly like the canvas did. */
+.clinic-media {
+  overflow: hidden;
+  background-color: #071913;
+  pointer-events: none;
+}
+
+.clinic-poster,
+.clinic-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  pointer-events: none;
+}
+
+.clinic-poster {
+  z-index: 0;
+}
+
+.clinic-video {
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.clinic-media.is-video-ready .clinic-video {
+  opacity: 1;
+}
+
+.clinic-media.clinic-video-failed .clinic-video {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clinic-video {
+    display: none !important;
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -900,7 +1021,7 @@ body {
   /* Move the centred hand down just enough to preserve clear air beneath
      the enlarged feature cards on short phones. script.js eases this back
      to zero as the hero copy fades, so the cinematic bridge stays aligned. */
-  #hero-canvas {
+  #hero-media {
     translate: 0 var(--hero-canvas-shift, 24px);
   }
   .pills-row {
@@ -1005,7 +1126,7 @@ body {
     font-size: 12px;
     line-height: 1;
   }
-  #hero-canvas {
+  #hero-media {
     transform-origin: 50% 0;
     scale: 1.18;
   }
@@ -3625,17 +3746,16 @@ html:not(.js) .dentist-dialog-body {
   display: grid;
   flex: none;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background-color: var(--foot-surface);
-  border: 1px solid rgba(94, 234, 212, 0.30);
-  color: var(--foot-aqua);
+  width: 42px;
+  height: 42px;
 }
 
-.site-footer-mark svg {
-  width: 20px;
-  height: 20px;
+.site-footer-mark picture,
+.site-footer-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .site-footer-brand-text {
