@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=96">
+  <link rel="stylesheet" href="style.css?v=108">
 </head>
 
 <body>
@@ -28,7 +28,7 @@
       </span>
     </a>
 
-    <ul class="nav-links" role="list">
+    <ul class="nav-links" id="nav-links" role="list">
       <li><a href="#hero-section">Home</a></li>
       <li><a href="#services-section">Services</a></li>
       <li><a href="#dentist-section">Doctor Profile</a></li>
@@ -48,28 +48,40 @@
         <svg class="cal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
         Book Visit
       </a>
+
+      <!-- Mobile menu toggle. Hidden above 960px, where .nav-links shows
+           inline; script.js owns aria-expanded and the open/close state. -->
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="nav-links">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false">
+          <path class="nav-toggle-bar nav-toggle-bar--top" d="M4 7h16"/>
+          <path class="nav-toggle-bar nav-toggle-bar--mid" d="M4 12h16"/>
+          <path class="nav-toggle-bar nav-toggle-bar--bot" d="M4 17h16"/>
+        </svg>
+      </button>
     </div>
   </nav>
 
   <!-- ════════════════════════════════════════════════════════════════
        SECTION 1: HERO SCROLL ANIMATION
-       Scroll-scrubbed video: hero-section-scrub.mp4 (1280x720 scrub encode,
-       0.2s keyframes, faststart, no audio). The original hero-section.mp4
-       stays on disk for rollback, and the old frame sequence remains for
-       rollback; only its first frame is used here as the poster.
+       Scroll-scrubbed video: Hero-Section-compressed-scrub.mp4, a
+       scrub-compatible encode of Hero-Section-compressed.mp4 (1280x720,
+       0.2s keyframes, no audio, faststart). The original compressed file,
+       the previous hero-section-scrub.mp4, and hero-section.mp4 stay on
+       disk for rollback; only the old first frame is used here as the poster.
        ════════════════════════════════════════════════════════════════ -->
   <section id="hero-section" class="scroll-sequence-section" aria-label="Hero 3D Tooth Animation">
     <div class="sticky-viewport">
       <div id="hero-media" class="hero-media sequence-canvas" aria-hidden="true">
-        <img id="hero-poster" class="hero-poster" src="ezgif-87eb4f2fc51a57fe-jpg/ezgif-frame-001.jpg" alt="" draggable="false">
-        <video id="hero-video" class="hero-video" muted playsinline preload="metadata" disablepictureinpicture tabindex="-1" data-src="hero-section-scrub.mp4?v=1"></video>
+        <img id="hero-poster" class="hero-poster" src="ezgif-87eb4f2fc51a57fe-jpg/ezgif-frame-001.jpg" alt="" draggable="false" decoding="async" fetchpriority="high">
+        <video id="hero-video" class="hero-video" muted playsinline preload="metadata" disablepictureinpicture tabindex="-1" data-src="Hero-Section-compressed-scrub.mp4?v=1"></video>
       </div>
 
       <!-- Hero Overlay UI -->
       <div id="hero-overlay" class="hero-overlay-wrap">
         <div id="hero-content">
 
-          <!-- Centered Title -->
+          <!-- Left-aligned copy column: headline → description → CTA →
+               feature badges, matching the hero reference composition. -->
           <div class="hero-heading">
             <h1>
               <span class="title-line">Healthier Smiles</span>
@@ -77,7 +89,16 @@
             </h1>
           </div>
 
-          <!-- 4 Feature Highlights framing the 3D rotating tooth -->
+          <p class="hero-subtitle">Comprehensive dental care for a healthier, happier you.</p>
+
+          <div class="hero-cta">
+            <a class="cta-primary-btn" id="hero-book-btn" href="#location-section" data-book-open>
+              Book Visit
+              <span class="arrow-icon" aria-hidden="true">&rarr;</span>
+            </a>
+          </div>
+
+          <!-- 4 Feature Highlights (one compact row beneath the CTA) -->
           <div class="features-zone" aria-label="Key features">
             <div class="pills-row">
               <!-- Feature 1: Expert Care -->
@@ -96,9 +117,6 @@
                 <span class="pill-text">Advanced<br>Technology</span>
               </div>
 
-              <!-- Center gap: leaves view clear for rotating 3D tooth -->
-              <div class="center-gap" aria-hidden="true"></div>
-
               <!-- Feature 3: Healthy Smiles -->
               <div class="feature-pill">
                 <div class="pill-icon" aria-hidden="true">
@@ -115,17 +133,6 @@
                 <span class="pill-text">Confident<br>You</span>
               </div>
             </div>
-          </div>
-
-          <!-- Bottom-Left CTA -->
-          <div class="hero-cta">
-            <p class="hero-subtitle">
-              Comprehensive dental<br>care for a healthier,<br>happier you.
-            </p>
-            <a class="cta-primary-btn" id="hero-book-btn" href="#location-section" data-book-open>
-              Book Visit
-              <span class="arrow-icon" aria-hidden="true">&rarr;</span>
-            </a>
           </div>
 
         </div>
@@ -754,7 +761,7 @@
     </div>
   </footer>
 
-  <script src="script.js?v=57"></script>
+  <script src="script.js?v=58"></script>
 </body>
 
 </html>

@@ -1,11 +1,12 @@
-﻿(function () {
+(function () {
   'use strict';
 
   // â”€â”€â”€ Sequence Configurations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // The hero is one scroll-scrubbed video. hero-section-scrub.mp4 is a 720p
-  // scrub encode with a keyframe every 0.2s and faststart enabled; the original
-  // source stays on disk for rollback. Narrow viewports keep the first-frame
-  // poster because the optimized file still trails fast mobile scrolls by
+  // The hero is one scroll-scrubbed video. Hero-Section-compressed-scrub.mp4 is
+  // a 720p scrub encode with a keyframe every 0.2s and faststart enabled; the
+  // original compressed source stays on disk for rollback. Narrow viewports
+  // keep the first-frame poster because the optimized file still trails fast
+  // mobile scrolls by
   // roughly a quarter second. Remove this guard to opt mobile into video.
   const HERO_VIDEO_STATIC_QUERY = '(max-width: 768px)';
   const HERO_VIDEO_FPS = 30;
@@ -88,6 +89,9 @@ document.documentElement.classList.add('js');
   let heroVideoLastSeekTime = -1;
   let heroVideoListenersBound = false;
   let heroVideoSeekTimeout = 0;
+  let heroVideoWarmed = false;
+  let heroVideoWarming = false;
+  let heroVideoWarmStep = 0;
 
   // Clinic video scrub state, deliberately separate from the hero so the
   // existing hero path stays untouched. The same serialised-seek contract
@@ -102,6 +106,9 @@ document.documentElement.classList.add('js');
   let clinicVideoLastSeekTime = -1;
   let clinicVideoListenersBound = false;
   let clinicVideoSeekTimeout = 0;
+  let clinicVideoWarmed = false;
+  let clinicVideoWarming = false;
+  let clinicVideoWarmStep = 0;
 
   // Dentist water-flosser cache and lazy loader. The state array avoids
   // duplicate requests and lets the current scroll position jump the queue.
@@ -145,9 +152,41 @@ document.documentElement.classList.add('js');
     if (!heroMedia || heroVideoFailed || !heroVideoEnabled || motionQuery.matches) return;
     if (!heroVideoReady) {
       heroVideoReady = true;
+      if (!heroVideoWarmed) {
+        warmHeroVideo();
+        return;
+      }
       heroMedia.classList.add('is-video-ready');
     }
     scheduleHeroVideoUpdate();
+  }
+
+  // A paused MP4 has no decoder allocated until the first non-zero seek. If
+  // that seek happens on the user's first scroll, it costs one long decode
+  // (200ms+ cold) exactly when the hero is supposed to start moving. Warm the
+  // decoder behind the poster, then return to frame zero before revealing it.
+  function warmHeroVideo() {
+    if (heroVideoWarming || heroVideoWarmed || !heroVideoReady || heroVideoDuration <= 0) return;
+    heroVideoWarming = true;
+    heroVideoWarmStep = 0;
+    heroVideoSeeking = true;
+    heroVideoSeekTimeout = setTimeout(() => {
+      heroVideoSeekTimeout = 0;
+      if (!heroVideoWarming) return;
+      heroVideoWarming = false;
+      heroVideoSeeking = false;
+      onHeroVideoError();
+    }, 2500);
+    // 0.2s is the first GOP boundary in the scrub encode. It is far enough
+    // from zero that the return seek below is guaranteed to fire `seeked`.
+    const warmTarget = Math.min(0.2, heroVideoDuration - HERO_VIDEO_END_PAD);
+    try {
+      heroVideo.currentTime = warmTarget;
+    } catch (error) {
+      heroVideoWarming = false;
+      heroVideoSeeking = false;
+      onHeroVideoError();
+    }
   }
 
   function onHeroVideoError() {
@@ -156,6 +195,8 @@ document.documentElement.classList.add('js');
     heroVideoEnabled = false;
     heroVideoReady = false;
     heroVideoSeeking = false;
+    heroVideoWarming = false;
+    heroVideoWarmStep = 0;
     if (heroVideoSeekTimeout) {
       clearTimeout(heroVideoSeekTimeout);
       heroVideoSeekTimeout = 0;
@@ -172,15 +213,41 @@ document.documentElement.classList.add('js');
       heroVideoSeekTimeout = 0;
     }
     heroVideoSeeking = false;
-    scheduleHeroVideoUpdate();
+    if (heroVideoWarming) {
+      if (heroVideoWarmStep === 0) {
+        heroVideoWarmStep = 1;
+        heroVideoSeeking = true;
+        heroVideoSeekTimeout = setTimeout(() => {
+          heroVideoSeekTimeout = 0;
+          if (!heroVideoWarming) return;
+          heroVideoWarming = false;
+          heroVideoSeeking = false;
+          onHeroVideoError();
+        }, 2500);
+        try {
+          heroVideo.currentTime = 0;
+        } catch (error) {
+          heroVideoWarming = false;
+          heroVideoSeeking = false;
+          onHeroVideoError();
+        }
+        return;
+      }
+      heroVideoWarming = false;
+      heroVideoWarmed = true;
+      heroVideoLastSeekTime = 0;
+      if (heroMedia) heroMedia.classList.add('is-video-ready');
+      scheduleHeroVideoUpdate(true);
+      return;
+    }
+    scheduleHeroVideoUpdate(true);
   }
 
-  function scheduleHeroVideoUpdate() {
+  function scheduleHeroVideoUpdate(immediate = false) {
     if (!heroVideoEnabled || heroVideoFailed || !heroVideoReady || heroVideoDuration <= 0) return;
-    if (heroVideoSeeking || heroVideoSeekScheduled) return;
+    if (heroVideoSeeking) return;
 
-    heroVideoSeekScheduled = true;
-    requestAnimationFrame(() => {
+    const performSeek = () => {
       heroVideoSeekScheduled = false;
       if (!heroVideoEnabled || heroVideoFailed || !heroVideoReady || heroVideoSeeking) return;
 
@@ -199,7 +266,7 @@ document.documentElement.classList.add('js');
         if (!heroVideoSeeking) return;
         heroVideoSeeking = false;
         onHeroVideoError();
-      }, 1200);
+      }, 2500);
 
       try {
         heroVideo.currentTime = target;
@@ -211,7 +278,15 @@ document.documentElement.classList.add('js');
         }
         onHeroVideoError();
       }
-    });
+    };
+
+    if (immediate) {
+      performSeek();
+    } else {
+      if (heroVideoSeekScheduled) return;
+      heroVideoSeekScheduled = true;
+      requestAnimationFrame(performSeek);
+    }
   }
 
   function startHeroVideo() {
@@ -241,6 +316,10 @@ document.documentElement.classList.add('js');
       heroVideo.src = src;
       heroVideo.load();
     } else if (heroVideoReady) {
+      if (!heroVideoWarmed) {
+        warmHeroVideo();
+        return;
+      }
       heroMedia.classList.add('is-video-ready');
       scheduleHeroVideoUpdate();
     }
@@ -249,6 +328,11 @@ document.documentElement.classList.add('js');
   function stopHeroVideo() {
     heroVideoEnabled = false;
     heroVideoSeeking = false;
+    if (heroVideoWarming) {
+      heroVideoWarming = false;
+      heroVideoWarmed = false;
+      heroVideoWarmStep = 0;
+    }
     if (heroVideoSeekTimeout) {
       clearTimeout(heroVideoSeekTimeout);
       heroVideoSeekTimeout = 0;
@@ -299,9 +383,35 @@ document.documentElement.classList.add('js');
     if (!clinicMedia || clinicVideoFailed || !clinicVideoEnabled || motionQuery.matches) return;
     if (!clinicVideoReady) {
       clinicVideoReady = true;
+      if (!clinicVideoWarmed) {
+        warmClinicVideo();
+        return;
+      }
       clinicMedia.classList.add('is-video-ready');
     }
     scheduleClinicVideoUpdate();
+  }
+
+  function warmClinicVideo() {
+    if (clinicVideoWarming || clinicVideoWarmed || !clinicVideoReady || clinicVideoDuration <= 0) return;
+    clinicVideoWarming = true;
+    clinicVideoWarmStep = 0;
+    clinicVideoSeeking = true;
+    clinicVideoSeekTimeout = setTimeout(() => {
+      clinicVideoSeekTimeout = 0;
+      if (!clinicVideoWarming) return;
+      clinicVideoWarming = false;
+      clinicVideoSeeking = false;
+      onClinicVideoError();
+    }, 1200);
+    const warmTarget = Math.min(0.2, clinicVideoDuration - CLINIC_VIDEO_END_PAD);
+    try {
+      clinicVideo.currentTime = warmTarget;
+    } catch (error) {
+      clinicVideoWarming = false;
+      clinicVideoSeeking = false;
+      onClinicVideoError();
+    }
   }
 
   function onClinicVideoError() {
@@ -310,6 +420,8 @@ document.documentElement.classList.add('js');
     clinicVideoEnabled = false;
     clinicVideoReady = false;
     clinicVideoSeeking = false;
+    clinicVideoWarming = false;
+    clinicVideoWarmStep = 0;
     if (clinicVideoSeekTimeout) {
       clearTimeout(clinicVideoSeekTimeout);
       clinicVideoSeekTimeout = 0;
@@ -326,15 +438,41 @@ document.documentElement.classList.add('js');
       clinicVideoSeekTimeout = 0;
     }
     clinicVideoSeeking = false;
-    scheduleClinicVideoUpdate();
+    if (clinicVideoWarming) {
+      if (clinicVideoWarmStep === 0) {
+        clinicVideoWarmStep = 1;
+        clinicVideoSeeking = true;
+        clinicVideoSeekTimeout = setTimeout(() => {
+          clinicVideoSeekTimeout = 0;
+          if (!clinicVideoWarming) return;
+          clinicVideoWarming = false;
+          clinicVideoSeeking = false;
+          onClinicVideoError();
+        }, 1200);
+        try {
+          clinicVideo.currentTime = 0;
+        } catch (error) {
+          clinicVideoWarming = false;
+          clinicVideoSeeking = false;
+          onClinicVideoError();
+        }
+        return;
+      }
+      clinicVideoWarming = false;
+      clinicVideoWarmed = true;
+      clinicVideoLastSeekTime = 0;
+      if (clinicMedia) clinicMedia.classList.add('is-video-ready');
+      scheduleClinicVideoUpdate(true);
+      return;
+    }
+    scheduleClinicVideoUpdate(true);
   }
 
-  function scheduleClinicVideoUpdate() {
+  function scheduleClinicVideoUpdate(immediate = false) {
     if (!clinicVideoEnabled || clinicVideoFailed || !clinicVideoReady || clinicVideoDuration <= 0) return;
-    if (clinicVideoSeeking || clinicVideoSeekScheduled) return;
+    if (clinicVideoSeeking) return;
 
-    clinicVideoSeekScheduled = true;
-    requestAnimationFrame(() => {
+    const performSeek = () => {
       clinicVideoSeekScheduled = false;
       if (!clinicVideoEnabled || clinicVideoFailed || !clinicVideoReady || clinicVideoSeeking) return;
 
@@ -365,7 +503,15 @@ document.documentElement.classList.add('js');
         }
         onClinicVideoError();
       }
-    });
+    };
+
+    if (immediate) {
+      performSeek();
+    } else {
+      if (clinicVideoSeekScheduled) return;
+      clinicVideoSeekScheduled = true;
+      requestAnimationFrame(performSeek);
+    }
   }
 
   function startClinicVideo() {
@@ -395,6 +541,10 @@ document.documentElement.classList.add('js');
       clinicVideo.src = src;
       clinicVideo.load();
     } else if (clinicVideoReady) {
+      if (!clinicVideoWarmed) {
+        warmClinicVideo();
+        return;
+      }
       clinicMedia.classList.add('is-video-ready');
       scheduleClinicVideoUpdate();
     }
@@ -403,6 +553,11 @@ document.documentElement.classList.add('js');
   function stopClinicVideo() {
     clinicVideoEnabled = false;
     clinicVideoSeeking = false;
+    if (clinicVideoWarming) {
+      clinicVideoWarming = false;
+      clinicVideoWarmed = false;
+      clinicVideoWarmStep = 0;
+    }
     if (clinicVideoSeekTimeout) {
       clearTimeout(clinicVideoSeekTimeout);
       clinicVideoSeekTimeout = 0;
@@ -452,6 +607,10 @@ document.documentElement.classList.add('js');
   let heroScrubDist = 1;  // scroll distance over which the hero frames play
   let clinicScrubStart = 0;
   let clinicScrubDist = 1;
+  // The bridge settles to 0 before the first frame and to 1 before the
+  // services hand-off, so most scroll positions recompute an unchanged value.
+  // Remembering the last applied t avoids re-writing five styles per frame.
+  let lastBridgeT = -1;
 
   function measureBridge() {
     const vh = window.innerHeight;
@@ -480,6 +639,7 @@ document.documentElement.classList.add('js');
     // scrubs across its own pin range at the original pacing.
     clinicScrubStart = bridgeEnd;
     clinicScrubDist = Math.max(1, clinicBottom - vh - bridgeEnd);
+    lastBridgeT = -1;
   }
 
   // â”€â”€â”€ Cinematic Bridge Driver â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -492,6 +652,12 @@ document.documentElement.classList.add('js');
     const t = bridgeDist > 0
       ? Math.min(Math.max((scrollTop - bridgeStart) / bridgeDist, 0), 1)
       : 0;
+
+    // t is clamped at both ends. Once the bridge has settled (or not started)
+    // every scroll computed the same styles; leave the existing style
+    // declarations alone instead of invalidating the layer each frame.
+    if (t === lastBridgeT) return;
+    lastBridgeT = t;
 
     const dissolve = t * t * (3 - 2 * t);   // smoothstep cross-fade
     const settle = 1 - Math.pow(1 - t, 3);  // ease-out cubic settle
@@ -593,9 +759,15 @@ document.documentElement.classList.add('js');
     //    composed value differ from the bridge's â€” outside it the bridge's
     //    own value is already correct, so this function writes nothing.
     if (fade > 0) {
-      const bridgeOpacity = parseFloat(clinicViewport.style.opacity);
-      const composedStr =
-        ((isNaN(bridgeOpacity) ? 1 : bridgeOpacity) * (1 - fade)).toFixed(3);
+      // Derive the bridge's own opacity from scroll instead of reading it
+      // back from the DOM. The bridge is memoised and no longer rewrites its
+      // settled value, so reading the composed style would multiply the
+      // previous frame's fade into the next one.
+      const bridgeT = bridgeDist > 0
+        ? Math.min(Math.max((scrollTop - bridgeStart) / bridgeDist, 0), 1)
+        : 0;
+      const bridgeOpacity = bridgeT * bridgeT * (3 - 2 * bridgeT);
+      const composedStr = (bridgeOpacity * (1 - fade)).toFixed(3);
       if (clinicViewport.style.opacity !== composedStr) {
         clinicViewport.style.opacity = composedStr;
       }
@@ -754,9 +926,17 @@ document.documentElement.classList.add('js');
     return y;
   }
 
+  let svcInnerDocTop = 0;
   function measureCardOffsets() {
     if (!svcCards.length || !svcInner) return;
     svcCardOffsets = svcCards.map((card) => offsetIn(card, svcInner));
+    let y = 0;
+    let node = svcInner;
+    while (node) {
+      y += node.offsetTop;
+      node = node.offsetParent;
+    }
+    svcInnerDocTop = y;
   }
 
   function revealAllCards() {
@@ -769,7 +949,7 @@ document.documentElement.classList.add('js');
     document.documentElement.classList.remove('svc-seq');
   }
 
-  function updateServicesSequence() {
+  function updateServicesSequence(scrollTop = 0) {
     if (!svcSeq.active || !svcCards.length) return;
     if (svcSeq.latched.every(Boolean)) return;
     svcSeq.frames += 1;
@@ -781,10 +961,10 @@ document.documentElement.classList.add('js');
 
     const grid = svcCards[0].parentElement;
     if (!grid || !svcInner) return;
-    if (svcCardOffsets.length !== svcCards.length) measureCardOffsets();
+    if (svcCardOffsets.length !== svcCards.length || !svcInnerDocTop) measureCardOffsets();
 
-    // Read every position first, then write: one layout pass per frame.
-    const anchorTop = svcInner.getBoundingClientRect().top;
+    // Derive position from pre-measured layout and scroll: zero layout thrashing per frame.
+    const anchorTop = svcInnerDocTop ? svcInnerDocTop - scrollTop : svcInner.getBoundingClientRect().top;
     const tops = svcCardOffsets.map((offset) => anchorTop + offset);
 
     // Position within its visual row (0 for the leftmost card of a row, and
@@ -841,10 +1021,14 @@ document.documentElement.classList.add('js');
     // fires once the sequence has done any work, and never when a frame has
     // been processed.
     const guard = () => {
-      if (svcSeq.frames !== 0 || svcSeq.latched.some(Boolean)) return;
+      if (svcSeq.frames !== 0 || svcSeq.latched.some(Boolean)) {
+        window.removeEventListener('scroll', guard);
+        return;
+      }
       const vh = window.innerHeight;
       if (svcCards.some((card) => card.getBoundingClientRect().top < vh)) {
         revealAllCards();
+        window.removeEventListener('scroll', guard);
       }
     };
     window.setTimeout(guard, 2000);
@@ -1707,41 +1891,58 @@ document.documentElement.classList.add('js');
   }
 
   // â”€â”€â”€ Scroll Event Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  function handleScroll() {
+  // Scroll events can arrive more than once per frame, and both window and
+  // document were previously bound to this work. Keep one passive listener
+  // and collapse every event into the next animation frame.
+  let scrollUpdateRaf = 0;
+  let lastHeroFade = -1;
+  let lastHeroPromptHidden = null;
+  let navScrolledState = false;
+
+  function updateScrollState() {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
 
     // 1. Hero video scrub â€” the timeline reaches its final frame exactly as
     //    the bridge opens, then holds that frame beneath the clinic.
     if (heroSection) {
-      const rect = heroSection.getBoundingClientRect();
-      const progress = Math.min(Math.max((scrollTop - heroDocTop) / heroScrubDist, 0), 1);
-      heroProgress = progress;
-      scheduleHeroVideoUpdate();
+      // The hero starts at the document origin and is not transformed, so its
+      // position is already known. Reading getBoundingClientRect() here used
+      // to force layout after the previous frame's style writes.
+      const heroOffset = Math.max(0, scrollTop - heroDocTop);
+      const progress = Math.min(Math.max(heroOffset / heroScrubDist, 0), 1);
+      if (progress !== heroProgress) {
+        heroProgress = progress;
+        scheduleHeroVideoUpdate();
+      }
 
       // Hero UI smooth fade over the first 480px. The mobile hand offset
       // introduced in CSS eases out over the same window, so it disappears
       // before the matched hero-to-clinic bridge begins.
       const fadeDist = 480;
-      const fadeRatio = Math.min(Math.max(-rect.top / fadeDist, 0), 1);
-      heroSection.style.setProperty(
-        '--hero-canvas-shift',
-        `${(24 * (1 - fadeRatio)).toFixed(1)}px`
-      );
-      if (heroContent) {
-        const opacity = (1 - fadeRatio).toFixed(3);
-        heroContent.style.opacity = opacity;
-        heroContent.style.transform = `translateY(${-fadeRatio * 45}px)`;
-        heroContent.style.pointerEvents = opacity < 0.08 ? 'none' : 'auto';
+      const fadeRatio = Math.min(Math.max(heroOffset / fadeDist, 0), 1);
+      if (fadeRatio !== lastHeroFade) {
+        lastHeroFade = fadeRatio;
+        if (window.innerWidth <= 768) {
+          heroSection.style.setProperty(
+            '--hero-canvas-shift',
+            `${(24 * (1 - fadeRatio)).toFixed(1)}px`
+          );
+        }
+        if (heroContent) {
+          const opacity = 1 - fadeRatio;
+          heroContent.style.opacity = opacity.toFixed(3);
+          heroContent.style.transform = `translateY(${-fadeRatio * 45}px)`;
+          heroContent.style.pointerEvents = opacity < 0.08 ? 'none' : 'auto';
+        }
       }
 
-      if (heroScrollPrompt) {
-        if (-rect.top > 60) {
-          heroScrollPrompt.style.opacity = '0';
-          heroScrollPrompt.style.transform = 'translateX(-50%) translateY(12px)';
-        } else {
-          heroScrollPrompt.style.opacity = '1';
-          heroScrollPrompt.style.transform = 'translateX(-50%) translateY(0)';
-        }
+      const promptHidden = heroOffset > 60;
+      if (heroScrollPrompt && promptHidden !== lastHeroPromptHidden) {
+        lastHeroPromptHidden = promptHidden;
+        heroScrollPrompt.style.opacity = promptHidden ? '0' : '1';
+        heroScrollPrompt.style.transform = promptHidden
+          ? 'translateX(-50%) translateY(12px)'
+          : 'translateX(-50%) translateY(0)';
       }
     }
 
@@ -1755,29 +1956,66 @@ document.documentElement.classList.add('js');
 
     // 3b. Services cards: the scroll-linked sequence — one card at a time,
     //     in order, as the panel crosses the viewport (a no-op under reduced
-    //     motion, before the cards exist, or once all four are latched).
-    updateServicesSequence();
+    //     motion, before the cards exist, or once all four are latched). The
+    //     section is far below the hero, so do not read its live rect there.
+    const vh = window.innerHeight;
+    if (!svcSeq.latched.every(Boolean) &&
+        scrollTop + vh >= svcStart - vh) {
+      updateServicesSequence(scrollTop);
+    }
 
     // 4. Clinic Sequence Progress â€” held on its opening frame during the
     //    bridge, then scrubbed across its own pin range (pacing unchanged).
     if (clinicSection) {
-      clinicProgress = Math.min(Math.max((scrollTop - clinicScrubStart) / clinicScrubDist, 0), 1);
-      scheduleClinicVideoUpdate();
+      const progress = Math.min(Math.max((scrollTop - clinicScrubStart) / clinicScrubDist, 0), 1);
+      if (progress !== clinicProgress) {
+        clinicProgress = progress;
+        scheduleClinicVideoUpdate();
+      }
     }
 
-    // 5. Dentist water-flosser progress. Loading and drawing are gated by
-    //    the section observer, so this is only a cheap rect read while the
-    //    rest of the page scrolls.
-    updateDentistWaterTarget();
+    // 5. Dentist water-flosser progress. The observer owns the near/far
+    //    state, so no live rect is read while the visitor is anywhere else
+    //    on the page.
+    if (dentistWaterNear) updateDentistWaterTarget();
 
     // 6. Navbar scroll style
     if (navbar) {
-      if (scrollTop > 40) {
-        navbar.classList.add('nav-scrolled');
-      } else {
-        navbar.classList.remove('nav-scrolled');
+      const scrolled = scrollTop > 40;
+      if (scrolled !== navScrolledState) {
+        navScrolledState = scrolled;
+        navbar.classList.toggle('nav-scrolled', scrolled);
       }
     }
+  }
+
+  function requestScrollUpdate() {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+
+    // Video progress is just a number and a coalesced seek request. Updating
+    // it in the scroll event (rather than waiting for the style rAF below)
+    // keeps the scrub one frame closer to the pointer while still batching
+    // every style write into a single frame.
+    if (heroSection) {
+      const progress = Math.min(Math.max((scrollTop - heroDocTop) / heroScrubDist, 0), 1);
+      if (progress !== heroProgress) {
+        heroProgress = progress;
+        scheduleHeroVideoUpdate();
+      }
+    }
+    if (clinicSection) {
+      const progress = Math.min(Math.max((scrollTop - clinicScrubStart) / clinicScrubDist, 0), 1);
+      if (progress !== clinicProgress) {
+        clinicProgress = progress;
+        scheduleClinicVideoUpdate();
+      }
+    }
+
+    if (scrollUpdateRaf) return;
+    scrollUpdateRaf = requestAnimationFrame(() => {
+      scrollUpdateRaf = 0;
+      updateScrollState();
+    });
   }
 
   // â”€â”€â”€ Dual Animation Loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1799,6 +2037,57 @@ document.documentElement.classList.add('js');
   }
 
   // â”€â”€â”€ Touch / Click Interaction for Infographic Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Mobile navigation menu ─────────────────────────────────────────────
+  // The four nav links collapse into a panel under the bar at ≤960px. The
+  // button is the only control: it owns aria-expanded, the panel's open
+  // class and the accessible label, and returns focus when Escape closes it.
+  function initNavMenu() {
+    const toggle = document.getElementById('nav-toggle');
+    const links = document.getElementById('nav-links');
+    const navbar = document.getElementById('navbar');
+    if (!toggle || !links || !navbar) return;
+
+    const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';
+
+    function setOpen(open) {
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
+      links.classList.toggle('is-open', open);
+      // The panel sits before the actions in the DOM, so move focus into it
+      // when it opens; Tab then walks the four links in reading order.
+      if (open) {
+        const first = links.querySelector('a');
+        if (first) first.focus();
+      }
+    }
+
+    toggle.addEventListener('click', () => {
+      setOpen(!isOpen());
+    });
+
+    // Navigating to a section closes the panel; the anchor keeps its own
+    // default behaviour and scroll target.
+    links.addEventListener('click', (event) => {
+      if (event.target.closest('a')) setOpen(false);
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!isOpen() || event.target.closest('#navbar')) return;
+      setOpen(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !isOpen()) return;
+      setOpen(false);
+      toggle.focus();
+    });
+
+    // The inline links come back above 960px, so the panel state resets.
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 960 && isOpen()) setOpen(false);
+    });
+  }
+
   function initBadgeInteractions() {
     const badgeGroups = document.querySelectorAll('.infographic-badge-group');
     badgeGroups.forEach((group) => {
@@ -1822,17 +2111,20 @@ document.documentElement.classList.add('js');
     measureBridge();
     measureServicesTransition(); // re-derive the hand-off window from layout
     measureCardOffsets();        // the grid may have wrapped to a new column count
-    handleScroll();
+    // A resize can change the breakpoint that owns the mobile hero offset.
+    lastHeroFade = -1;
+    lastHeroPromptHidden = null;
+    navScrolledState = false;
+    updateScrollState();
   }, { passive: true });
-  window.addEventListener('scroll', handleScroll, { passive: true });
-  document.addEventListener('scroll', handleScroll, { passive: true });
+  window.addEventListener('scroll', requestScrollUpdate, { passive: true });
 
   // Late layout settle (web fonts / images): re-check the hand-off window
   // and re-apply once â€” cheap, one-shot.
   window.addEventListener('load', () => {
     measureServicesTransition();
     measureCardOffsets();
-    handleScroll();
+    updateScrollState();
   }, { once: true });
 
   // Live motion-preference changes: toggle the enhancement class, force the
@@ -1846,15 +2138,16 @@ document.documentElement.classList.add('js');
         revealAllCards();
       }
       lastSvcT = -1;
-      handleScroll();
+      updateScrollState();
     });
   }
 
   measureBridge();
   measureServicesTransition();
-  handleScroll();
+  updateScrollState();
   initHeroVideo();
   initClinicVideo();
+  initNavMenu();
   initBadgeInteractions();
   initServicesReveal();
   initServicesSequence();
