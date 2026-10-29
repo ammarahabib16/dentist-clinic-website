@@ -1,6 +1,12 @@
 (function () {
   'use strict';
 
+  // Scroll positions are continuous; the scrub encodes are not. Snap every
+  // requested time to the nearest source frame so sub-frame scroll movement
+  // (Lenis moves the page in small steps) cannot ask the decoder for the same
+  // frame twice, while staying within half a frame of the mapped time.
+  const snapToFrame = (time, fps) => Math.round(time * fps) / fps;
+
   // â”€â”€â”€ Sequence Configurations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // The hero is one scroll-scrubbed video. Hero-Section-compressed-scrub.mp4 is
   // a 720p scrub encode with a keyframe every 0.2s and faststart enabled; the
@@ -11,7 +17,7 @@
   const HERO_VIDEO_STATIC_QUERY = '(max-width: 768px)';
   const HERO_VIDEO_FPS = 30;
   const HERO_VIDEO_END_PAD = 1 / HERO_VIDEO_FPS;
-  const HERO_SEEK_EPSILON = 0.02;
+  const HERO_VIDEO_FRAME = 1 / HERO_VIDEO_FPS;
 
   // The clinic scene is also one scroll-scrubbed video now. The encode keeps
   // a keyframe every 0.2s for fast reverse seeking and has no audio track.
@@ -20,7 +26,7 @@
   const CLINIC_VIDEO_STATIC_QUERY = '(max-width: 768px)';
   const CLINIC_VIDEO_FPS = 30;
   const CLINIC_VIDEO_END_PAD = 1 / CLINIC_VIDEO_FPS;
-  const CLINIC_SEEK_EPSILON = 0.02;
+  const CLINIC_VIDEO_FRAME = 1 / CLINIC_VIDEO_FPS;
   // A seek that jumps several seconds can take longer than a frame or two in
   // a cold decoder. This is a genuine-stall guard, not a frame budget.
   const CLINIC_SEEK_TIMEOUT = 2500;
@@ -75,6 +81,56 @@ document.documentElement.classList.add('js');
     if (!motionQuery.matches) document.documentElement.classList.add('js-anim');
 
   const navbar = document.getElementById('navbar');
+
+  // ─── Smooth scrolling (Lenis 1.3.27) ────────────────────────────────────
+  // Lenis is vendored in assets/vendor and is a wheel-scrolling enhancement
+  // only: touch keeps native momentum (syncTouch stays off), it never
+  // initialises under prefers-reduced-motion, and if the vendor file fails to
+  // load every scroll path falls back to native scrolling. autoRaf is off
+  // because the page owns one demand-driven rAF loop (scrollLoop below) that
+  // advances Lenis and applies the scroll-linked work in the same frame. The
+  // short lerp keeps direction reversals prompt and leaves no long easing tail
+  // doing video work after the wheel stops.
+  const LENIS_LERP = 0.18;
+  let lenis = null;
+
+  function initLenis() {
+    if (lenis || motionQuery.matches) return;
+    if (typeof window.Lenis !== 'function') return;
+    try {
+      lenis = new window.Lenis({
+        autoRaf: false,
+        lerp: LENIS_LERP,
+        wheelMultiplier: 1,
+        touchMultiplier: 1,
+        smoothWheel: true,
+        syncTouch: false,
+        anchors: false,
+        autoResize: true,
+        respectReducedMotion: true,
+        prevent: (node) => Boolean(node.closest('[data-lenis-prevent], dialog[open]')),
+      });
+    } catch (error) {
+      lenis = null;
+      return;
+    }
+    // Wheel input is the one gesture Lenis consumes before any native scroll
+    // event exists, so it has to wake the shared loop itself. Touch, keyboard
+    // and scrollbar scrolling still arrive through the native scroll listener.
+    window.addEventListener('wheel', onLenisWheel, { passive: true });
+    ensureScrollLoop();
+  }
+
+  function destroyLenis() {
+    if (!lenis) return;
+    window.removeEventListener('wheel', onLenisWheel);
+    lenis.destroy();
+    lenis = null;
+  }
+
+  function onLenisWheel() {
+    if (lenis) ensureScrollLoop();
+  }
 
   // Hero video scrub state. Seeks are serialised: scroll updates only change
   // heroProgress; one rAF-coalesced seek is in flight at a time, and the next
@@ -208,6 +264,11 @@ document.documentElement.classList.add('js');
   }
 
   function onHeroVideoSeeked() {
+    // A `seeked` event can be dispatched for a seek that a newer target has
+    // already superseded; the element keeps reporting `seeking` until the
+    // newest seek lands. Only the event that leaves the video idle may release
+    // the single seek slot, so two targets can never be in flight at once.
+    if (heroVideo.seeking) return;
     if (heroVideoSeekTimeout) {
       clearTimeout(heroVideoSeekTimeout);
       heroVideoSeekTimeout = 0;
@@ -252,9 +313,10 @@ document.documentElement.classList.add('js');
       if (!heroVideoEnabled || heroVideoFailed || !heroVideoReady || heroVideoSeeking) return;
 
       const lastFrameTime = Math.max(0, heroVideoDuration - HERO_VIDEO_END_PAD);
-      const target = Math.min(Math.max(heroProgress * lastFrameTime, 0), lastFrameTime);
-      if (Math.abs(target - heroVideoLastSeekTime) < HERO_SEEK_EPSILON) return;
-      if (Math.abs(target - heroVideo.currentTime) < HERO_SEEK_EPSILON) {
+      const clamped = Math.min(Math.max(heroProgress * lastFrameTime, 0), lastFrameTime);
+      const target = Math.min(snapToFrame(clamped, HERO_VIDEO_FPS), lastFrameTime);
+      if (target === heroVideoLastSeekTime) return;
+      if (Math.abs(target - heroVideo.currentTime) < HERO_VIDEO_FRAME * 0.5) {
         heroVideoLastSeekTime = target;
         return;
       }
@@ -433,6 +495,8 @@ document.documentElement.classList.add('js');
   }
 
   function onClinicVideoSeeked() {
+    // Same superseded-event guard as the hero: the newest seek owns the slot.
+    if (clinicVideo.seeking) return;
     if (clinicVideoSeekTimeout) {
       clearTimeout(clinicVideoSeekTimeout);
       clinicVideoSeekTimeout = 0;
@@ -477,9 +541,10 @@ document.documentElement.classList.add('js');
       if (!clinicVideoEnabled || clinicVideoFailed || !clinicVideoReady || clinicVideoSeeking) return;
 
       const lastFrameTime = Math.max(0, clinicVideoDuration - CLINIC_VIDEO_END_PAD);
-      const target = Math.min(Math.max(clinicProgress * lastFrameTime, 0), lastFrameTime);
-      if (Math.abs(target - clinicVideoLastSeekTime) < CLINIC_SEEK_EPSILON) return;
-      if (Math.abs(target - clinicVideo.currentTime) < CLINIC_SEEK_EPSILON) {
+      const clamped = Math.min(Math.max(clinicProgress * lastFrameTime, 0), lastFrameTime);
+      const target = Math.min(snapToFrame(clamped, CLINIC_VIDEO_FPS), lastFrameTime);
+      if (target === clinicVideoLastSeekTime) return;
+      if (Math.abs(target - clinicVideo.currentTime) < CLINIC_VIDEO_FRAME * 0.5) {
         clinicVideoLastSeekTime = target;
         return;
       }
@@ -819,29 +884,47 @@ document.documentElement.classList.add('js');
     setSvcHeader(reveal(0.3), reveal(0.4), reveal(0.5));
   }
 
-  // Nav bridge: the navbar's "Services" link points at the section's own id,
-  // but since Phase 16 that id sits two viewports above the finished panel —
-  // its first screen is the cross-dissolve (still covered by the clinic) and
-  // its second is the footage alone. So a click aims two screens past the
-  // section's top, which is exactly the composed panel: heading under the
-  // navbar, four cards up, the dentist one screen below. The link itself is
-  // left completely alone — same href, same hash, same history entry, and it
-  // still works with JS off; the section's scroll-margin-top gives that same
-  // landing to a plain hash jump. Only the scroll is smoothed. Modifier
-  // clicks are left to the browser so open-in-new-tab and friends keep
-  // working.
+  // Nav bridge: in-page anchors keep their href, hash, history entry and
+  // no-JS behaviour. When Lenis is active the scroll is routed through it, so
+  // there is only one smoothing system; #services-section still lands on the
+  // finished panel because Lenis honours the section's own
+  // scroll-margin-top (-200vh), exactly like the browser does for a hash jump.
+  // Without Lenis the browser's native behaviour is left untouched, except for
+  // the services link, whose landing sits two viewports below its box top.
+  // Booking links are left to the dialog handler (they preventDefault first).
   document.addEventListener('click', (event) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey ||
         event.ctrlKey || event.shiftKey || event.altKey) return;
     const link = event.target && event.target.closest
-      ? event.target.closest('a[href="#services-section"]')
+      ? event.target.closest('a[href]')
       : null;
-    if (!link || !servicesSection) return;
+    if (!link || link.hasAttribute('data-book-open')) return;
+    const href = link.getAttribute('href');
+    if (!href || href.charAt(0) !== '#' || href === '#') return;
+    if (link.target && link.target !== '_self') return;
+    if (link.hasAttribute('download')) return;
+    let target = null;
+    try {
+      target = document.getElementById(decodeURIComponent(href.slice(1)));
+    } catch (error) {
+      return;
+    }
+    if (!target) return;
+
+    if (lenis) {
+      event.preventDefault();
+      if (history.pushState) history.pushState(null, '', href);
+      lenis.scrollTo(target, { immediate: motionQuery.matches });
+      ensureScrollLoop();
+      return;
+    }
+
+    if (target !== servicesSection || !servicesSection) return;
     event.preventDefault();
     const top = Math.max(0, Math.round(
       servicesSection.offsetTop + window.innerHeight * 2
     ));
-    history.pushState(null, '', '#services-section');
+    if (history.pushState) history.pushState(null, '', '#services-section');
     window.scrollTo({ top, behavior: motionQuery.matches ? 'auto' : 'smooth' });
   });
 
@@ -1275,6 +1358,10 @@ document.documentElement.classList.add('js');
         if (dialog.open) return;
         dialog.showModal();
         document.documentElement.classList.add('appt-open');
+        // Stop Lenis while the modal owns the screen: its own scroll lock is
+        // native overflow, and a smoothing loop writing window.scrollTo behind
+        // it would reintroduce background movement (and desync on close).
+        if (lenis) lenis.stop();
       });
     });
 
@@ -1287,6 +1374,7 @@ document.documentElement.classList.add('js');
     dialog.addEventListener('click', (e) => { if (e.target === dialog) close(); });
     dialog.addEventListener('close', () => {
       document.documentElement.classList.remove('appt-open');
+      if (lenis) lenis.start();
       clearErrors();
     });
 
@@ -1871,6 +1959,7 @@ document.documentElement.classList.add('js');
         dentistWaterCurrent = dentistWaterTarget;
         renderDentistWater(dentistWaterCurrent);
         pumpDentistWater();
+        ensureScrollLoop();
       });
     }, { rootMargin: '700px 0px' });
     observer.observe(dentistSection);
@@ -1886,6 +1975,7 @@ document.documentElement.classList.add('js');
         dentistWaterCurrent = dentistWaterTarget;
         renderDentistWater(dentistWaterCurrent);
         pumpDentistWater();
+        ensureScrollLoop();
       });
     }
   }
@@ -1894,14 +1984,21 @@ document.documentElement.classList.add('js');
   // Scroll events can arrive more than once per frame, and both window and
   // document were previously bound to this work. Keep one passive listener
   // and collapse every event into the next animation frame.
-  let scrollUpdateRaf = 0;
+  let scrollLoopRaf = 0;
+  let scrollDirty = false;
   let lastHeroFade = -1;
   let lastHeroPromptHidden = null;
   let navScrolledState = false;
 
-  function updateScrollState() {
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+  // The visible scroll position. Lenis writes the window scroll every frame,
+  // so this is what the compositor paints; reading its own animated value
+  // avoids rounding a fractional position down to the previous pixel.
+  function getScrollTop() {
+    if (lenis) return lenis.animatedScroll;
+    return window.pageYOffset || document.documentElement.scrollTop || 0;
+  }
 
+  function updateScrollState(scrollTop = getScrollTop()) {
     // 1. Hero video scrub â€” the timeline reaches its final frame exactly as
     //    the bridge opens, then holds that frame beneath the clinic.
     if (heroSection) {
@@ -1977,7 +2074,9 @@ document.documentElement.classList.add('js');
     // 5. Dentist water-flosser progress. The observer owns the near/far
     //    state, so no live rect is read while the visitor is anywhere else
     //    on the page.
-    if (dentistWaterNear) updateDentistWaterTarget();
+    if (dentistWaterNear) {
+      updateDentistWaterTarget();
+    }
 
     // 6. Navbar scroll style
     if (navbar) {
@@ -1989,13 +2088,10 @@ document.documentElement.classList.add('js');
     }
   }
 
-  function requestScrollUpdate() {
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
-
-    // Video progress is just a number and a coalesced seek request. Updating
-    // it in the scroll event (rather than waiting for the style rAF below)
-    // keeps the scrub one frame closer to the pointer while still batching
-    // every style write into a single frame.
+  // Video progress is just a number and a coalesced seek request. Applying it
+  // on the frame that moved the page keeps the scrub aligned with the position
+  // being painted instead of one frame behind it.
+  function applyScrubProgress(scrollTop) {
     if (heroSection) {
       const progress = Math.min(Math.max((scrollTop - heroDocTop) / heroScrubDist, 0), 1);
       if (progress !== heroProgress) {
@@ -2010,20 +2106,52 @@ document.documentElement.classList.add('js');
         scheduleClinicVideoUpdate();
       }
     }
-
-    if (scrollUpdateRaf) return;
-    scrollUpdateRaf = requestAnimationFrame(() => {
-      scrollUpdateRaf = 0;
-      updateScrollState();
-    });
   }
 
-  // â”€â”€â”€ Dual Animation Loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  function animationLoop() {
-    // Dentist water-flosser LERP. It runs only while the section is near and
-    // the frames have been given permission to load; otherwise the canvas
-    // simply holds its last frame.
-    if (dentistWaterNear && dentistWaterStarted && !motionQuery.matches) {
+  // Native scroll events: touch momentum, keyboard, scrollbar drags and the
+  // native smooth scroll used when Lenis is unavailable. While Lenis animates
+  // it emits one of these per frame as it writes the position; the shared loop
+  // already owns that frame, so those events must not schedule a second pass.
+  function requestScrollUpdate() {
+    if (!lenis || lenis.isScrolling !== 'smooth') {
+      scrollDirty = true;
+      applyScrubProgress(getScrollTop());
+    }
+    ensureScrollLoop();
+  }
+
+  // ─── Shared scroll coordinator ──────────────────────────────────────────
+  // Lenis, the scroll-linked styles and the dentist water-flosser lerp share
+  // one demand-driven rAF loop. Native scroll events, wheel input and
+  // programmatic scrolls start it; it parks itself once Lenis has settled and
+  // the dentist section is away, so an idle page runs no scroll work at all.
+  function ensureScrollLoop() {
+    if (scrollLoopRaf) return;
+    scrollLoopRaf = requestAnimationFrame(scrollLoop);
+  }
+
+  function scrollLoop(time) {
+    scrollLoopRaf = 0;
+
+    // 1. Advance Lenis first so every read below is the position that will be
+    //    painted this frame. 'smooth' is the only state Lenis animates in;
+    //    'native' (touch, scrollbar, keyboard) is driven by scroll events.
+    const wasAnimating = !!lenis && lenis.isScrolling === 'smooth';
+    if (lenis) lenis.raf(time);
+    const isAnimating = !!lenis && lenis.isScrolling === 'smooth';
+
+    // 2. Video progress and the scroll-linked styles run on the frame that
+    //    moved the page, including the frame Lenis lands on its target.
+    if (scrollDirty || wasAnimating || isAnimating) {
+      scrollDirty = false;
+      const scrollTop = getScrollTop();
+      applyScrubProgress(scrollTop);
+      updateScrollState(scrollTop);
+    }
+
+    // 3. The dentist lerp only runs while its section is near.
+    const dentistBusy = !!(dentistWaterNear && dentistWaterStarted && !motionQuery.matches);
+    if (dentistBusy) {
       const wDelta = dentistWaterTarget - dentistWaterCurrent;
       if (Math.abs(wDelta) > 0.5) {
         dentistWaterCurrent += wDelta * DENTIST_WATER_LERP;
@@ -2033,7 +2161,7 @@ document.documentElement.classList.add('js');
       renderDentistWater(dentistWaterCurrent);
     }
 
-    requestAnimationFrame(animationLoop);
+    if (dentistBusy || isAnimating || scrollDirty) ensureScrollLoop();
   }
 
   // â”€â”€â”€ Touch / Click Interaction for Infographic Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -2108,6 +2236,7 @@ document.documentElement.classList.add('js');
 
   // â”€â”€â”€ Initialization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   window.addEventListener('resize', () => {
+    if (lenis) lenis.resize();
     measureBridge();
     measureServicesTransition(); // re-derive the hand-off window from layout
     measureCardOffsets();        // the grid may have wrapped to a new column count
@@ -2122,6 +2251,7 @@ document.documentElement.classList.add('js');
   // Late layout settle (web fonts / images): re-check the hand-off window
   // and re-apply once â€” cheap, one-shot.
   window.addEventListener('load', () => {
+    if (lenis) lenis.resize();
     measureServicesTransition();
     measureCardOffsets();
     updateScrollState();
@@ -2134,16 +2264,21 @@ document.documentElement.classList.add('js');
     motionQuery.addEventListener('change', () => {
       document.documentElement.classList.toggle('js-anim', !motionQuery.matches);
       if (motionQuery.matches) {
+        destroyLenis();
         svcSeq.active = false;
         revealAllCards();
+      } else {
+        initLenis();
       }
       lastSvcT = -1;
       updateScrollState();
+      ensureScrollLoop();
     });
   }
 
   measureBridge();
   measureServicesTransition();
+  initLenis();
   updateScrollState();
   initHeroVideo();
   initClinicVideo();
@@ -2158,5 +2293,6 @@ document.documentElement.classList.add('js');
   initAppointmentDialog();
   initDentistWater();
   initDentistReveal();
-  requestAnimationFrame(animationLoop);
+  // The animation loop is demand-driven now: the dentist observer starts it
+  // when the water sequence comes near, and it stops itself when it leaves.
 })();
