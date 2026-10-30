@@ -10,26 +10,18 @@
   // â”€â”€â”€ Sequence Configurations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // The hero is one scroll-scrubbed video. Hero-Section-compressed-scrub.mp4 is
   // a 720p scrub encode with a keyframe every 0.2s and faststart enabled; the
-  // original compressed source stays on disk for rollback. Narrow viewports
-  // keep the first-frame poster because the optimized file still trails fast
-  // mobile scrolls by
-  // roughly a quarter second. Remove this guard to opt mobile into video.
-  const HERO_VIDEO_STATIC_QUERY = '(max-width: 768px)';
+  // original compressed source stays on disk for rollback. Both desktop and mobile
+  // viewports participate in full scroll-scrubbing.
   const HERO_VIDEO_FPS = 30;
   const HERO_VIDEO_END_PAD = 1 / HERO_VIDEO_FPS;
   const HERO_VIDEO_FRAME = 1 / HERO_VIDEO_FPS;
 
-  // The clinic scene is also one scroll-scrubbed video now. The encode keeps
-  // a keyframe every 0.2s for fast reverse seeking and has no audio track.
-  // Narrow viewports keep the poster because video seeking trails fast mobile
-  // scrolls; the old frame sequence stays on disk for rollback.
-  const CLINIC_VIDEO_STATIC_QUERY = '(max-width: 768px)';
+  // The clinic scene is also one scroll-scrubbed video (second-section-scrub.mp4).
+  // The encode keeps a keyframe every 0.2s for fast seeking and has faststart metadata.
   const CLINIC_VIDEO_FPS = 30;
   const CLINIC_VIDEO_END_PAD = 1 / CLINIC_VIDEO_FPS;
   const CLINIC_VIDEO_FRAME = 1 / CLINIC_VIDEO_FPS;
-  // A seek that jumps several seconds can take longer than a frame or two in
-  // a cold decoder. This is a genuine-stall guard, not a frame budget.
-  const CLINIC_SEEK_TIMEOUT = 2500;
+  const SEEK_WATCHDOG_MS = 2500;
 
   // The water-flosser sequence behind the doctor cards. 180 frames at
   // 1280x720, 2.6 MB combined. It is never part of the initial page load.
@@ -132,39 +124,31 @@ document.documentElement.classList.add('js');
     if (lenis) ensureScrollLoop();
   }
 
-  // Hero video scrub state. Seeks are serialised: scroll updates only change
-  // heroProgress; one rAF-coalesced seek is in flight at a time, and the next
-  // one is issued from `seeked` if the target moved again.
+  // Hero video scrub state.
   let heroProgress = 0;
   let heroVideoDuration = 0;
   let heroVideoReady = false;
   let heroVideoEnabled = false;
   let heroVideoFailed = false;
   let heroVideoSeeking = false;
-  let heroVideoSeekScheduled = false;
   let heroVideoLastSeekTime = -1;
   let heroVideoListenersBound = false;
   let heroVideoSeekTimeout = 0;
   let heroVideoWarmed = false;
   let heroVideoWarming = false;
-  let heroVideoWarmStep = 0;
 
-  // Clinic video scrub state, deliberately separate from the hero so the
-  // existing hero path stays untouched. The same serialised-seek contract
-  // applies: scroll stores progress, then at most one seek is in flight.
+  // Clinic video scrub state.
   let clinicProgress = 0;
   let clinicVideoDuration = 0;
   let clinicVideoReady = false;
   let clinicVideoEnabled = false;
   let clinicVideoFailed = false;
   let clinicVideoSeeking = false;
-  let clinicVideoSeekScheduled = false;
   let clinicVideoLastSeekTime = -1;
   let clinicVideoListenersBound = false;
   let clinicVideoSeekTimeout = 0;
   let clinicVideoWarmed = false;
   let clinicVideoWarming = false;
-  let clinicVideoWarmStep = 0;
 
   // Dentist water-flosser cache and lazy loader. The state array avoids
   // duplicate requests and lets the current scroll position jump the queue.
@@ -182,26 +166,67 @@ document.documentElement.classList.add('js');
   const padZero = (n) => String(n).padStart(3, '0');
   const getDentistWaterPath = (i) => `${DENTIST_WATER_DIR}/ezgif-frame-${padZero(i + 1)}.jpg`;
 
-  // â”€â”€â”€ Canvas Sizing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Frame Presentation & Media Utilities ────────────────────────────────
+  // Helper to prime video decoders without depending on autoplay permissions.
+  // Calling .play() on muted playsinline media kickstarts WebKit / Android hardware
+  // pipelines, then immediately pauses once resolved. If blocked by low power mode
+  // or strict policy, the rejection is swallowed and scrubbing continues via currentTime.
+  function primeVideo(video) {
+    if (!video) return;
+    video.muted = true;
+    video.playsInline = true;
+    try {
+      const p = video.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          video.pause();
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  }
 
-  // â”€â”€â”€ Cover Fit Drawing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Cross-device frame presentation sync:
+  // In modern Chrome, Edge and Safari (15.4+), requestVideoFrameCallback reliably fires
+  // when the newly decoded video frame has actually been presented for composition.
+  // In Firefox or older browsers where rVFC is unavailable, seeked fires directly.
+  function waitForFramePresentation(video, onPresented) {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      onPresented();
+    };
 
-  // â”€â”€â”€ Nearest Loaded Frame Fallbacks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    if ('requestVideoFrameCallback' in video && typeof video.requestVideoFrameCallback === 'function') {
+      try {
+        video.requestVideoFrameCallback(() => {
+          finish();
+        });
+      } catch (err) {}
 
-  // â”€â”€â”€ Render Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // Fallback in case rVFC is deferred by backgrounding or compositor delay
+      const onSeeked = () => {
+        video.removeEventListener('seeked', onSeeked);
+        setTimeout(finish, 20);
+      };
+      video.addEventListener('seeked', onSeeked, { once: true });
+    } else {
+      const onSeeked = () => {
+        finish();
+      };
+      video.addEventListener('seeked', onSeeked, { once: true });
+    }
+  }
 
-  // â”€â”€â”€ Hero Video Scrub â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // A single paused video is driven by scroll position. We never autoplay:
-  // each scroll frame updates heroProgress, and at most one rAF-coalesced seek
-  // is in flight. When that seek lands, `seeked` issues the next one only if
-  // the target has moved, so a fast scroll cannot queue dozens of stale seeks.
+  // ─── Hero Video Scrub ──────────────────────────────────────────────────
   function onHeroVideoMetadata() {
     heroVideoDuration = Number.isFinite(heroVideo.duration) ? heroVideo.duration : 0;
-    if (heroVideoDuration <= 0) {
-      onHeroVideoError();
-      return;
+    if (heroVideoDuration <= 0) return;
+    if (heroVideo.readyState >= 2) {
+      onHeroVideoReady();
+    } else {
+      scheduleHeroVideoUpdate();
     }
-    if (!heroVideoReady) scheduleHeroVideoUpdate();
   }
 
   function onHeroVideoReady() {
@@ -217,99 +242,98 @@ document.documentElement.classList.add('js');
     scheduleHeroVideoUpdate();
   }
 
-  // A paused MP4 has no decoder allocated until the first non-zero seek. If
-  // that seek happens on the user's first scroll, it costs one long decode
-  // (200ms+ cold) exactly when the hero is supposed to start moving. Warm the
-  // decoder behind the poster, then return to frame zero before revealing it.
   function warmHeroVideo() {
     if (heroVideoWarming || heroVideoWarmed || !heroVideoReady || heroVideoDuration <= 0) return;
     heroVideoWarming = true;
-    heroVideoWarmStep = 0;
     heroVideoSeeking = true;
+
+    if (heroVideoSeekTimeout) clearTimeout(heroVideoSeekTimeout);
     heroVideoSeekTimeout = setTimeout(() => {
       heroVideoSeekTimeout = 0;
       if (!heroVideoWarming) return;
       heroVideoWarming = false;
       heroVideoSeeking = false;
-      onHeroVideoError();
-    }, 2500);
-    // 0.2s is the first GOP boundary in the scrub encode. It is far enough
-    // from zero that the return seek below is guaranteed to fire `seeked`.
-    const warmTarget = Math.min(0.2, heroVideoDuration - HERO_VIDEO_END_PAD);
+      heroVideoWarmed = true;
+      heroVideoLastSeekTime = -1;
+      if (heroMedia) heroMedia.classList.add('is-video-ready');
+      scheduleHeroVideoUpdate();
+    }, SEEK_WATCHDOG_MS);
+
+    waitForFramePresentation(heroVideo, onHeroVideoPresented);
+    const warmTarget = Math.min(0.1, heroVideoDuration - HERO_VIDEO_END_PAD);
     try {
       heroVideo.currentTime = warmTarget;
     } catch (error) {
       heroVideoWarming = false;
       heroVideoSeeking = false;
-      onHeroVideoError();
+      heroVideoWarmed = true;
+      if (heroMedia) heroMedia.classList.add('is-video-ready');
+      scheduleHeroVideoUpdate();
+    }
+  }
+
+  function onHeroVideoPresented() {
+    if (heroVideoSeekTimeout) {
+      clearTimeout(heroVideoSeekTimeout);
+      heroVideoSeekTimeout = 0;
+    }
+    heroVideoSeeking = false;
+
+    if (heroMedia && !heroMedia.classList.contains('is-video-ready')) {
+      heroMedia.classList.add('is-video-ready');
+    }
+
+    if (heroVideoWarming) {
+      heroVideoWarming = false;
+      heroVideoWarmed = true;
+      scheduleHeroVideoUpdate();
+      return;
+    }
+
+    scheduleHeroVideoUpdate();
+  }
+
+  function onHeroVideoStalled() {
+    if (heroVideoSeeking && !heroVideoSeekTimeout) {
+      heroVideoSeekTimeout = setTimeout(() => {
+        heroVideoSeekTimeout = 0;
+        heroVideoSeeking = false;
+        scheduleHeroVideoUpdate();
+      }, 1500);
     }
   }
 
   function onHeroVideoError() {
-    if (heroVideoFailed) return;
-    heroVideoFailed = true;
-    heroVideoEnabled = false;
-    heroVideoReady = false;
-    heroVideoSeeking = false;
-    heroVideoWarming = false;
-    heroVideoWarmStep = 0;
-    if (heroVideoSeekTimeout) {
-      clearTimeout(heroVideoSeekTimeout);
-      heroVideoSeekTimeout = 0;
-    }
-    if (heroMedia) {
-      heroMedia.classList.remove('is-video-ready');
-      heroMedia.classList.add('hero-video-failed');
-    }
-  }
-
-  function onHeroVideoSeeked() {
-    // A `seeked` event can be dispatched for a seek that a newer target has
-    // already superseded; the element keeps reporting `seeking` until the
-    // newest seek lands. Only the event that leaves the video idle may release
-    // the single seek slot, so two targets can never be in flight at once.
-    if (heroVideo.seeking) return;
-    if (heroVideoSeekTimeout) {
-      clearTimeout(heroVideoSeekTimeout);
-      heroVideoSeekTimeout = 0;
-    }
-    heroVideoSeeking = false;
-    if (heroVideoWarming) {
-      if (heroVideoWarmStep === 0) {
-        heroVideoWarmStep = 1;
-        heroVideoSeeking = true;
-        heroVideoSeekTimeout = setTimeout(() => {
-          heroVideoSeekTimeout = 0;
-          if (!heroVideoWarming) return;
-          heroVideoWarming = false;
-          heroVideoSeeking = false;
-          onHeroVideoError();
-        }, 2500);
-        try {
-          heroVideo.currentTime = 0;
-        } catch (error) {
-          heroVideoWarming = false;
-          heroVideoSeeking = false;
-          onHeroVideoError();
-        }
-        return;
-      }
+    const err = heroVideo ? heroVideo.error : null;
+    if (err && err.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
+      if (heroVideoFailed) return;
+      heroVideoFailed = true;
+      heroVideoEnabled = false;
+      heroVideoReady = false;
+      heroVideoSeeking = false;
       heroVideoWarming = false;
-      heroVideoWarmed = true;
-      heroVideoLastSeekTime = 0;
-      if (heroMedia) heroMedia.classList.add('is-video-ready');
-      scheduleHeroVideoUpdate(true);
-      return;
+      if (heroVideoSeekTimeout) {
+        clearTimeout(heroVideoSeekTimeout);
+        heroVideoSeekTimeout = 0;
+      }
+      if (heroMedia) {
+        heroMedia.classList.remove('is-video-ready');
+        heroMedia.classList.add('hero-video-failed');
+      }
+    } else {
+      heroVideoSeeking = false;
+      if (heroVideoSeekTimeout) {
+        clearTimeout(heroVideoSeekTimeout);
+        heroVideoSeekTimeout = 0;
+      }
     }
-    scheduleHeroVideoUpdate(true);
   }
 
-  function scheduleHeroVideoUpdate(immediate = false) {
+  function scheduleHeroVideoUpdate() {
     if (!heroVideoEnabled || heroVideoFailed || !heroVideoReady || heroVideoDuration <= 0) return;
     if (heroVideoSeeking) return;
 
     const performSeek = () => {
-      heroVideoSeekScheduled = false;
       if (!heroVideoEnabled || heroVideoFailed || !heroVideoReady || heroVideoSeeking) return;
 
       const lastFrameTime = Math.max(0, heroVideoDuration - HERO_VIDEO_END_PAD);
@@ -323,12 +347,16 @@ document.documentElement.classList.add('js');
 
       heroVideoSeeking = true;
       heroVideoLastSeekTime = target;
+
+      if (heroVideoSeekTimeout) clearTimeout(heroVideoSeekTimeout);
       heroVideoSeekTimeout = setTimeout(() => {
         heroVideoSeekTimeout = 0;
         if (!heroVideoSeeking) return;
         heroVideoSeeking = false;
-        onHeroVideoError();
-      }, 2500);
+        scheduleHeroVideoUpdate();
+      }, SEEK_WATCHDOG_MS);
+
+      waitForFramePresentation(heroVideo, onHeroVideoPresented);
 
       try {
         heroVideo.currentTime = target;
@@ -338,17 +366,10 @@ document.documentElement.classList.add('js');
           clearTimeout(heroVideoSeekTimeout);
           heroVideoSeekTimeout = 0;
         }
-        onHeroVideoError();
       }
     };
 
-    if (immediate) {
-      performSeek();
-    } else {
-      if (heroVideoSeekScheduled) return;
-      heroVideoSeekScheduled = true;
-      requestAnimationFrame(performSeek);
-    }
+    performSeek();
   }
 
   function startHeroVideo() {
@@ -361,9 +382,10 @@ document.documentElement.classList.add('js');
       heroVideo.addEventListener('loadedmetadata', onHeroVideoMetadata);
       heroVideo.addEventListener('loadeddata', onHeroVideoReady);
       heroVideo.addEventListener('canplay', onHeroVideoReady);
+      heroVideo.addEventListener('canplaythrough', onHeroVideoReady);
+      heroVideo.addEventListener('stalled', onHeroVideoStalled);
+      heroVideo.addEventListener('waiting', onHeroVideoStalled);
       heroVideo.addEventListener('error', onHeroVideoError);
-      heroVideo.addEventListener('seeking', () => { heroVideoSeeking = true; });
-      heroVideo.addEventListener('seeked', onHeroVideoSeeked);
     }
 
     if (!heroVideo.getAttribute('src')) {
@@ -374,16 +396,17 @@ document.documentElement.classList.add('js');
       }
       heroVideo.muted = true;
       heroVideo.playsInline = true;
-      heroVideo.preload = 'metadata';
+      heroVideo.preload = 'auto';
       heroVideo.src = src;
       heroVideo.load();
-    } else if (heroVideoReady) {
-      if (!heroVideoWarmed) {
-        warmHeroVideo();
-        return;
+      primeVideo(heroVideo);
+    } else {
+      primeVideo(heroVideo);
+      if (heroVideo.readyState >= 2) {
+        onHeroVideoReady();
+      } else if (heroVideoReady) {
+        scheduleHeroVideoUpdate();
       }
-      heroMedia.classList.add('is-video-ready');
-      scheduleHeroVideoUpdate();
     }
   }
 
@@ -393,7 +416,6 @@ document.documentElement.classList.add('js');
     if (heroVideoWarming) {
       heroVideoWarming = false;
       heroVideoWarmed = false;
-      heroVideoWarmStep = 0;
     }
     if (heroVideoSeekTimeout) {
       clearTimeout(heroVideoSeekTimeout);
@@ -405,22 +427,12 @@ document.documentElement.classList.add('js');
 
   function initHeroVideo() {
     if (!heroVideo || !heroMedia) return;
-    const staticWidth = window.matchMedia(HERO_VIDEO_STATIC_QUERY);
-    if (!motionQuery.matches && !staticWidth.matches) startHeroVideo();
+    if (!motionQuery.matches) startHeroVideo();
     if (typeof motionQuery.addEventListener === 'function') {
       motionQuery.addEventListener('change', () => {
         if (motionQuery.matches) {
           stopHeroVideo();
-        } else if (!staticWidth.matches) {
-          startHeroVideo();
-        }
-      });
-    }
-    if (typeof staticWidth.addEventListener === 'function') {
-      staticWidth.addEventListener('change', () => {
-        if (staticWidth.matches) {
-          stopHeroVideo();
-        } else if (!motionQuery.matches) {
+        } else {
           startHeroVideo();
         }
       });
@@ -428,17 +440,14 @@ document.documentElement.classList.add('js');
   }
 
   // ─── Clinic Video Scrub ────────────────────────────────────────────────
-  // The clinic uses the same paused-video contract as the hero, but with its
-  // own state and timeline. Scroll progress is held at 0 through the bridge,
-  // then maps the unchanged clinic pin range across the video. One seek is in
-  // flight at a time; `seeked` only asks for another if scroll moved again.
   function onClinicVideoMetadata() {
     clinicVideoDuration = Number.isFinite(clinicVideo.duration) ? clinicVideo.duration : 0;
-    if (clinicVideoDuration <= 0) {
-      onClinicVideoError();
-      return;
+    if (clinicVideoDuration <= 0) return;
+    if (clinicVideo.readyState >= 2) {
+      onClinicVideoReady();
+    } else {
+      scheduleClinicVideoUpdate();
     }
-    if (!clinicVideoReady) scheduleClinicVideoUpdate();
   }
 
   function onClinicVideoReady() {
@@ -457,87 +466,95 @@ document.documentElement.classList.add('js');
   function warmClinicVideo() {
     if (clinicVideoWarming || clinicVideoWarmed || !clinicVideoReady || clinicVideoDuration <= 0) return;
     clinicVideoWarming = true;
-    clinicVideoWarmStep = 0;
     clinicVideoSeeking = true;
+
+    if (clinicVideoSeekTimeout) clearTimeout(clinicVideoSeekTimeout);
     clinicVideoSeekTimeout = setTimeout(() => {
       clinicVideoSeekTimeout = 0;
       if (!clinicVideoWarming) return;
       clinicVideoWarming = false;
       clinicVideoSeeking = false;
-      onClinicVideoError();
-    }, 1200);
-    const warmTarget = Math.min(0.2, clinicVideoDuration - CLINIC_VIDEO_END_PAD);
+      clinicVideoWarmed = true;
+      clinicVideoLastSeekTime = -1;
+      if (clinicMedia) clinicMedia.classList.add('is-video-ready');
+      scheduleClinicVideoUpdate();
+    }, SEEK_WATCHDOG_MS);
+
+    waitForFramePresentation(clinicVideo, onClinicVideoPresented);
+    const warmTarget = Math.min(0.1, clinicVideoDuration - CLINIC_VIDEO_END_PAD);
     try {
       clinicVideo.currentTime = warmTarget;
     } catch (error) {
       clinicVideoWarming = false;
       clinicVideoSeeking = false;
-      onClinicVideoError();
+      clinicVideoWarmed = true;
+      if (clinicMedia) clinicMedia.classList.add('is-video-ready');
+      scheduleClinicVideoUpdate();
+    }
+  }
+
+  function onClinicVideoPresented() {
+    if (clinicVideoSeekTimeout) {
+      clearTimeout(clinicVideoSeekTimeout);
+      clinicVideoSeekTimeout = 0;
+    }
+    clinicVideoSeeking = false;
+
+    if (clinicMedia && !clinicMedia.classList.contains('is-video-ready')) {
+      clinicMedia.classList.add('is-video-ready');
+    }
+
+    if (clinicVideoWarming) {
+      clinicVideoWarming = false;
+      clinicVideoWarmed = true;
+      scheduleClinicVideoUpdate();
+      return;
+    }
+
+    scheduleClinicVideoUpdate();
+  }
+
+  function onClinicVideoStalled() {
+    if (clinicVideoSeeking && !clinicVideoSeekTimeout) {
+      clinicVideoSeekTimeout = setTimeout(() => {
+        clinicVideoSeekTimeout = 0;
+        clinicVideoSeeking = false;
+        scheduleClinicVideoUpdate();
+      }, 1500);
     }
   }
 
   function onClinicVideoError() {
-    if (clinicVideoFailed) return;
-    clinicVideoFailed = true;
-    clinicVideoEnabled = false;
-    clinicVideoReady = false;
-    clinicVideoSeeking = false;
-    clinicVideoWarming = false;
-    clinicVideoWarmStep = 0;
-    if (clinicVideoSeekTimeout) {
-      clearTimeout(clinicVideoSeekTimeout);
-      clinicVideoSeekTimeout = 0;
-    }
-    if (clinicMedia) {
-      clinicMedia.classList.remove('is-video-ready');
-      clinicMedia.classList.add('clinic-video-failed');
-    }
-  }
-
-  function onClinicVideoSeeked() {
-    // Same superseded-event guard as the hero: the newest seek owns the slot.
-    if (clinicVideo.seeking) return;
-    if (clinicVideoSeekTimeout) {
-      clearTimeout(clinicVideoSeekTimeout);
-      clinicVideoSeekTimeout = 0;
-    }
-    clinicVideoSeeking = false;
-    if (clinicVideoWarming) {
-      if (clinicVideoWarmStep === 0) {
-        clinicVideoWarmStep = 1;
-        clinicVideoSeeking = true;
-        clinicVideoSeekTimeout = setTimeout(() => {
-          clinicVideoSeekTimeout = 0;
-          if (!clinicVideoWarming) return;
-          clinicVideoWarming = false;
-          clinicVideoSeeking = false;
-          onClinicVideoError();
-        }, 1200);
-        try {
-          clinicVideo.currentTime = 0;
-        } catch (error) {
-          clinicVideoWarming = false;
-          clinicVideoSeeking = false;
-          onClinicVideoError();
-        }
-        return;
-      }
+    const err = clinicVideo ? clinicVideo.error : null;
+    if (err && err.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
+      if (clinicVideoFailed) return;
+      clinicVideoFailed = true;
+      clinicVideoEnabled = false;
+      clinicVideoReady = false;
+      clinicVideoSeeking = false;
       clinicVideoWarming = false;
-      clinicVideoWarmed = true;
-      clinicVideoLastSeekTime = 0;
-      if (clinicMedia) clinicMedia.classList.add('is-video-ready');
-      scheduleClinicVideoUpdate(true);
-      return;
+      if (clinicVideoSeekTimeout) {
+        clearTimeout(clinicVideoSeekTimeout);
+        clinicVideoSeekTimeout = 0;
+      }
+      if (clinicMedia) {
+        clinicMedia.classList.remove('is-video-ready');
+        clinicMedia.classList.add('clinic-video-failed');
+      }
+    } else {
+      clinicVideoSeeking = false;
+      if (clinicVideoSeekTimeout) {
+        clearTimeout(clinicVideoSeekTimeout);
+        clinicVideoSeekTimeout = 0;
+      }
     }
-    scheduleClinicVideoUpdate(true);
   }
 
-  function scheduleClinicVideoUpdate(immediate = false) {
+  function scheduleClinicVideoUpdate() {
     if (!clinicVideoEnabled || clinicVideoFailed || !clinicVideoReady || clinicVideoDuration <= 0) return;
     if (clinicVideoSeeking) return;
 
     const performSeek = () => {
-      clinicVideoSeekScheduled = false;
       if (!clinicVideoEnabled || clinicVideoFailed || !clinicVideoReady || clinicVideoSeeking) return;
 
       const lastFrameTime = Math.max(0, clinicVideoDuration - CLINIC_VIDEO_END_PAD);
@@ -551,12 +568,16 @@ document.documentElement.classList.add('js');
 
       clinicVideoSeeking = true;
       clinicVideoLastSeekTime = target;
+
+      if (clinicVideoSeekTimeout) clearTimeout(clinicVideoSeekTimeout);
       clinicVideoSeekTimeout = setTimeout(() => {
         clinicVideoSeekTimeout = 0;
         if (!clinicVideoSeeking) return;
         clinicVideoSeeking = false;
-        onClinicVideoError();
-      }, CLINIC_SEEK_TIMEOUT);
+        scheduleClinicVideoUpdate();
+      }, SEEK_WATCHDOG_MS);
+
+      waitForFramePresentation(clinicVideo, onClinicVideoPresented);
 
       try {
         clinicVideo.currentTime = target;
@@ -566,17 +587,10 @@ document.documentElement.classList.add('js');
           clearTimeout(clinicVideoSeekTimeout);
           clinicVideoSeekTimeout = 0;
         }
-        onClinicVideoError();
       }
     };
 
-    if (immediate) {
-      performSeek();
-    } else {
-      if (clinicVideoSeekScheduled) return;
-      clinicVideoSeekScheduled = true;
-      requestAnimationFrame(performSeek);
-    }
+    performSeek();
   }
 
   function startClinicVideo() {
@@ -589,9 +603,10 @@ document.documentElement.classList.add('js');
       clinicVideo.addEventListener('loadedmetadata', onClinicVideoMetadata);
       clinicVideo.addEventListener('loadeddata', onClinicVideoReady);
       clinicVideo.addEventListener('canplay', onClinicVideoReady);
+      clinicVideo.addEventListener('canplaythrough', onClinicVideoReady);
+      clinicVideo.addEventListener('stalled', onClinicVideoStalled);
+      clinicVideo.addEventListener('waiting', onClinicVideoStalled);
       clinicVideo.addEventListener('error', onClinicVideoError);
-      clinicVideo.addEventListener('seeking', () => { clinicVideoSeeking = true; });
-      clinicVideo.addEventListener('seeked', onClinicVideoSeeked);
     }
 
     if (!clinicVideo.getAttribute('src')) {
@@ -602,16 +617,17 @@ document.documentElement.classList.add('js');
       }
       clinicVideo.muted = true;
       clinicVideo.playsInline = true;
-      clinicVideo.preload = 'metadata';
+      clinicVideo.preload = 'auto';
       clinicVideo.src = src;
       clinicVideo.load();
-    } else if (clinicVideoReady) {
-      if (!clinicVideoWarmed) {
-        warmClinicVideo();
-        return;
+      primeVideo(clinicVideo);
+    } else {
+      primeVideo(clinicVideo);
+      if (clinicVideo.readyState >= 2) {
+        onClinicVideoReady();
+      } else if (clinicVideoReady) {
+        scheduleClinicVideoUpdate();
       }
-      clinicMedia.classList.add('is-video-ready');
-      scheduleClinicVideoUpdate();
     }
   }
 
@@ -621,7 +637,6 @@ document.documentElement.classList.add('js');
     if (clinicVideoWarming) {
       clinicVideoWarming = false;
       clinicVideoWarmed = false;
-      clinicVideoWarmStep = 0;
     }
     if (clinicVideoSeekTimeout) {
       clearTimeout(clinicVideoSeekTimeout);
@@ -633,22 +648,41 @@ document.documentElement.classList.add('js');
 
   function initClinicVideo() {
     if (!clinicVideo || !clinicMedia) return;
-    const staticWidth = window.matchMedia(CLINIC_VIDEO_STATIC_QUERY);
-    if (!motionQuery.matches && !staticWidth.matches) startClinicVideo();
+    if (motionQuery.matches) return;
+
+    // Intelligent preloading: start downloading clinic video as user starts scrolling or approaches section
+    let clinicObserver = null;
+    const preloadClinic = () => {
+      window.removeEventListener('scroll', onScrollPreloadClinic);
+      if (clinicObserver) {
+        clinicObserver.disconnect();
+        clinicObserver = null;
+      }
+      startClinicVideo();
+    };
+
+    const onScrollPreloadClinic = () => {
+      if (getScrollTop() > 100) preloadClinic();
+    };
+
+    if (typeof IntersectionObserver !== 'undefined' && clinicSection) {
+      clinicObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) preloadClinic();
+        });
+      }, { rootMargin: '250% 0px 250% 0px' });
+      clinicObserver.observe(clinicSection);
+    }
+
+    window.addEventListener('scroll', onScrollPreloadClinic, { passive: true });
+
+    if (getScrollTop() > 100) preloadClinic();
+
     if (typeof motionQuery.addEventListener === 'function') {
       motionQuery.addEventListener('change', () => {
         if (motionQuery.matches) {
           stopClinicVideo();
-        } else if (!staticWidth.matches) {
-          startClinicVideo();
-        }
-      });
-    }
-    if (typeof staticWidth.addEventListener === 'function') {
-      staticWidth.addEventListener('change', () => {
-        if (staticWidth.matches) {
-          stopClinicVideo();
-        } else if (!motionQuery.matches) {
+        } else if (getScrollTop() > 100) {
           startClinicVideo();
         }
       });
@@ -2097,6 +2131,8 @@ document.documentElement.classList.add('js');
       if (progress !== heroProgress) {
         heroProgress = progress;
         scheduleHeroVideoUpdate();
+      } else if (scrollTop >= heroDocTop && scrollTop <= bridgeEnd) {
+        scheduleHeroVideoUpdate();
       }
     }
     if (clinicSection) {
@@ -2104,9 +2140,12 @@ document.documentElement.classList.add('js');
       if (progress !== clinicProgress) {
         clinicProgress = progress;
         scheduleClinicVideoUpdate();
+      } else if (scrollTop >= bridgeStart && scrollTop <= (svcEnd || clinicScrubStart + clinicScrubDist)) {
+        scheduleClinicVideoUpdate();
       }
     }
   }
+
 
   // Native scroll events: touch momentum, keyboard, scrollbar drags and the
   // native smooth scroll used when Lenis is unavailable. While Lenis animates
@@ -2275,6 +2314,39 @@ document.documentElement.classList.add('js');
       ensureScrollLoop();
     });
   }
+
+  // Recover animation state when returning from background tab or device unlock
+  function onVisibilityChange() {
+    if (document.visibilityState === 'visible') {
+      if (heroVideoSeeking) {
+        heroVideoSeeking = false;
+        if (heroVideoSeekTimeout) {
+          clearTimeout(heroVideoSeekTimeout);
+          heroVideoSeekTimeout = 0;
+        }
+      }
+      if (clinicVideoSeeking) {
+        clinicVideoSeeking = false;
+        if (clinicVideoSeekTimeout) {
+          clearTimeout(clinicVideoSeekTimeout);
+          clinicVideoSeekTimeout = 0;
+        }
+      }
+      if (heroVideo && heroVideoReady && heroVideo.paused) {
+        primeVideo(heroVideo);
+      }
+      if (clinicVideo && clinicVideoReady && clinicVideo.paused) {
+        primeVideo(clinicVideo);
+      }
+      const scrollTop = getScrollTop();
+      applyScrubProgress(scrollTop);
+      updateScrollState(scrollTop);
+    }
+  }
+  document.addEventListener('visibilitychange', onVisibilityChange);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) onVisibilityChange();
+  });
 
   measureBridge();
   measureServicesTransition();

@@ -1167,9 +1167,7 @@ body {
      480px mirrors the fade in script.js; measureBridge() reads the live
      boxes, so the bridge still spans exactly 100vh and the clinic keeps its
      own 620vh pacing. */
-  #hero-section {
-    height: calc(212vh + 480px);
-  }
+  /* Mobile hero maintains the full 620vh height matching desktop */
 
   /* The hero's top padding scales at 11vh while the bar's scales at 2.5vh,
      so above ~760px the old pair closed to 1–3px. With the bar now solid
