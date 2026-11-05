@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=115">
+  <link rel="stylesheet" href="style.css?v=117">
   <link rel="stylesheet" href="assets/vendor/lenis-1.3.27/lenis.css">
 </head>
 
@@ -78,20 +78,19 @@
   </nav>
 
   <!-- ════════════════════════════════════════════════════════════════
-       SECTION 1: HERO SCROLL ANIMATION
-       Scroll-scrubbed video: Hero-Section-compressed-scrub.mp4, a
-       scrub-compatible encode of Hero-Section-compressed.mp4 (1280x720,
-       0.2s keyframes, no audio, faststart). The original compressed file,
-       the previous hero-section-scrub.mp4, and hero-section.mp4 stay on
-       disk for rollback; only the old first frame is used here as the poster.
+       SECTION 1: HERO
+       One static clinic photograph (gloved hands presenting a molar
+       model against the treatment room) fills the hero visual area. The
+       scroll-linked video scrub was removed: a still cover-fit image is
+       deterministic on every device, needs no decoder, and cannot stall
+       into a frozen frame.
+       The hero copy, CTA and feature pills sit above it unchanged.
        ════════════════════════════════════════════════════════════════ -->
-  <section id="hero-section" class="scroll-sequence-section" aria-label="Hero 3D Tooth Animation">
+  <section id="hero-section" class="scroll-sequence-section" aria-label="Hero">
     <div class="sticky-viewport">
       <div id="hero-media" class="hero-media sequence-canvas" aria-hidden="true">
-        <img id="hero-poster" class="hero-poster" src="ezgif-87eb4f2fc51a57fe-jpg/ezgif-frame-001.jpg" alt=""
+        <img id="hero-image" class="hero-image" src="Modern%20Dental%20Clinic%20with%20Tooth%20Model.png" alt=""
           draggable="false" decoding="async" fetchpriority="high">
-        <video id="hero-video" class="hero-video" muted playsinline webkit-playsinline preload="auto"
-          disablepictureinpicture tabindex="-1" data-src="Hero-Section-compressed-scrub.mp4?v=1"></video>
       </div>
 
       <!-- Hero Overlay UI -->
@@ -112,7 +111,7 @@
           <div class="hero-cta">
             <a class="cta-primary-btn" id="hero-book-btn" href="#location-section" data-book-open>
               Book Visit
-              <span class="arrow-icon" aria-hidden="true">&rarr;</span>
+              <!-- <span class="arrow-icon" aria-hidden="true">&rarr;</span> -->
             </a>
           </div>
 
@@ -169,18 +168,19 @@
   </section>
 
   <!-- ════════════════════════════════════════════════════════════════
-       SECTION 2: NEXT SECTION (CLINICAL SUITE SCROLL ANIMATION)
-       Scroll-scrubbed video: second-section-scrub.mp4 (1280x720 scrub encode,
-       0.2s keyframes, faststart, no audio). The original second-section.mp4
-       and the old ezgif-4a7fad58a20dd84f-jpg frame sequence stay on disk for
-       rollback; the first frame is used here as the compressed poster.
+       SECTION 2: CLINICAL SUITE
+       One static clinic photograph (dentist treating a patient beside an
+       oversized tooth model) fills the pinned visual area. The scroll-
+       linked video scrub was removed for the same reason as the hero:
+       the image is identical on every device and never stalls. The
+       section structure, headline and cinematic bridge stay unchanged.
        ════════════════════════════════════════════════════════════════ -->
-  <section id="clinic-section" class="scroll-sequence-section" aria-label="Clinical Operatory Animation">
+  <section id="clinic-section" class="scroll-sequence-section" aria-label="Clinical Operatory">
     <div class="sticky-viewport">
       <div id="clinic-media" class="clinic-media sequence-canvas" aria-hidden="true">
-        <img id="clinic-poster" class="clinic-poster" src="second-section-poster.jpg" alt="" draggable="false">
-        <video id="clinic-video" class="clinic-video" muted playsinline webkit-playsinline preload="auto"
-          disablepictureinpicture tabindex="-1" data-src="second-section-scrub.mp4?v=1"></video>
+        <img id="clinic-image" class="clinic-image"
+          src="Modern%20Dental%20Clinic%20with%20Oversized%20Tooth%20Model%20(1).png" alt="" draggable="false"
+          decoding="async" loading="lazy">
       </div>
 
       <!-- Bridge bloom: soft light carried across the cinematic hand-off
@@ -928,7 +928,7 @@
   </footer>
 
   <script src="assets/vendor/lenis-1.3.27/lenis.min.js"></script>
-  <script src="script.js?v=70"></script>
+  <script src="script.js?v=74"></script>
 </body>
 
 </html>

@@ -407,15 +407,20 @@ body {
 
 /* ─── Cinematic Bridge Between The Two Sequences ──────────────────────────
    Both sequences are halves of one camera journey that meet on the
-   "hand-held tooth" beat. The hero section gains +100vh of hold past its
-   scrub range, and the clinic section is pulled up −200vh so that its
-   sticky viewport pins exactly while the hero viewport is still pinned.
-   For that overlapping 100vh both environments share the screen and
+   "hand-held tooth" beat. The clinic section is pulled up −200vh so that
+   its sticky viewport pins one viewport before the hero viewport unpins;
+   for that overlapping viewport both environments share the screen and
    script.js cross-dissolves a matched dolly between them (hero dolly-in →
-   clinic settle). Total page height and each sequence's scrub pacing are
-   unchanged, and every bridge value is scroll-derived → reversible. */
+   clinic settle). Every bridge value is scroll-derived → reversible.
+
+   The hero used to be 620vh tall because it carried 520vh of video-scrub
+   range. The scrub is gone — the hero is one still photograph — so the only
+   scroll it still needs is its own first screen plus the 100vh bridge
+   overlap: 100vh + 200vh pull-up = 300vh. At 620vh the clinic's viewport
+   did not reach the fold until 420vh of scrolling; at 300vh it arrives after
+   exactly one screen, and the bridge still has its full 100vh to run. */
 #hero-section {
-  height: 620vh;
+  height: 300vh;
 }
 
 #clinic-section {
@@ -440,6 +445,16 @@ body {
   background-color: #071913;
 }
 
+/* ─── Hero ground ──────────────────────────────────────────────────────
+   Only visible for the split second before the photograph paints on
+   landscape, and on portrait it is the surface the copy sits on: the
+   photograph fills the frame edge to edge on screens wider than they are
+   tall (see .hero-image), and on portrait screens it becomes the top panel
+   with the copy beneath it (see the portrait block below). */
+#hero-section > .sticky-viewport {
+  background-color: #0d352d;
+}
+
 .sequence-canvas {
   position: absolute;
   inset: 0;
@@ -453,99 +468,68 @@ body {
   will-change: transform;
 }
 
-/* Hero media layer: one video replaces the old 285-image canvas. The poster
-   underneath is the first frame, so the hero never starts black while the
-   metadata or first seek is loading. Both layers cover-fit exactly like the
-   canvas did, and neither can intercept the hero's UI. */
+/* Hero media layer: one static clinic photograph. On any screen wider than
+   it is tall the photograph fills the whole frame (object-fit: cover) so the
+   hero has no bands above or below it; on portrait screens it becomes the
+   panel across the top of the hero (see the portrait block). Either way the
+   image is identical on every device (no decoder, no seek queue), and it can
+   never intercept the hero's UI. */
 .hero-media {
   overflow: hidden;
-  background-color: #071913;
+  background-color: transparent;
   pointer-events: none;
 }
 
-.hero-poster,
-.hero-video {
+.hero-image {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  /* Fill the hero. The crop is symmetric and only ever takes the outer
+     clinic background - the chair on the left, the instrument tray on the
+     right. The anchor is pulled to 28% rather than centre so the gloved
+     hands sit slightly right of the headline instead of under it: on the
+     widest screens centre already clears the copy, on 1440x900 and below it
+     would not, and 28% still keeps the whole grip inside the frame at every
+     landscape aspect from 1:1 up. */
   object-fit: cover;
-  object-position: center center;
+  object-position: 28% center;
   display: block;
   pointer-events: none;
-}
-
-.hero-poster {
   z-index: 0;
 }
 
-.hero-video {
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 0.35s ease;
-}
-
-.hero-media.is-video-ready .hero-video {
-  opacity: 1;
-}
-
-.hero-media.hero-video-failed .hero-video {
-  display: none;
-}
-
-/* Reference composition: park the shared hero frame in the right column so
-   the tooth and hands clear the copy and badges. The 20% shift leaves a calm
-   dark field on the left for the copy; the slightly smaller scale keeps the
-   full grip visible instead of cropping the hands at the viewport edge.
-   Poster and video share this crop exactly; transform-origin (50% 45%)
-   comes from .sequence-canvas, and the bridge's inline scale still composes
-   on top of it. */
+/* Desktop / laptop landscape. object-fit: cover fills the pinned viewport
+   completely, so there is no leftover strip to fill and no crop anchor is
+   needed beyond centre. transform-origin (50% 45%) comes from
+   .sequence-canvas, and the bridge's inline scale still composes on top of
+   it. */
 @media (min-width: 769px) {
   .hero-media {
-    translate: 20% -5%;
-    scale: 1.16;
+    translate: none;
+    scale: none;
   }
-  /* The right-shifted media leaves its own left edge inside the viewport.
-     Fade the first slice of the media into the matching page tone so that
-     edge does not read as a vertical seam behind the copy.
-     The fade is a sibling overlay rather than a mask-image on the media:
-     masking the full-size video surface forces an extra offscreen mask
-     render on every scrub frame, which profiled as 16-19 dropped frames per
-     fast scroll at 1440x900 / 1728x1117 (frame p95 83 ms vs 33-50 ms). The
-     gradient below composites the exact same result - solid #071913 at the
-     edge, transparent at 10% - over the poster/video while leaving them
-     unmasked. */
-  .hero-media::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 10%;
-    z-index: 2;
-    pointer-events: none;
-    background: linear-gradient(90deg, #071913 0%, rgba(7, 25, 19, 0) 100%);
-  }
+  /* The left-edge tone fade that used to live here (a solid #071913 strip
+     across the first 10% of the media) has been removed. It was a second
+     near-black layer stacked on top of the scrim, so the extreme left edge
+     of the hero was pure page ground over a photograph that had already been
+     darkened – the "black patch" reading. The scrim above now carries the
+     whole legibility job on its own, which is what it was tuned for. */
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-video {
-    display: none !important;
-  }
+  /* The hero is already a still image: nothing to disable. */
 }
 
-/* Clinic media layer: one video replaces the old 276-image canvas. The
-   poster is a compressed copy of the first frame, so the pinned clinic
-   scene never flashes the background while metadata or a seek is pending.
-   Both layers cover-fit exactly like the canvas did. */
+/* Clinic media layer: one static clinic photograph covers the pinned scene.
+   The cinematic bridge still dollies it; no video decode is involved. */
 .clinic-media {
   overflow: hidden;
   background-color: #071913;
   pointer-events: none;
 }
 
-.clinic-poster,
-.clinic-video {
+.clinic-image {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -554,30 +538,7 @@ body {
   object-position: center center;
   display: block;
   pointer-events: none;
-}
-
-.clinic-poster {
   z-index: 0;
-}
-
-.clinic-video {
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 0.35s ease;
-}
-
-.clinic-media.is-video-ready .clinic-video {
-  opacity: 1;
-}
-
-.clinic-media.clinic-video-failed .clinic-video {
-  display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .clinic-video {
-    display: none !important;
-  }
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -596,16 +557,22 @@ body {
 
 /* Left-to-right legibility wash: the reference keeps the dental subject on
    the right and the copy over calm, dark green. This is a UI scrim over the
-   media (not a new graphic) and clears before the tooth. */
+   media (not a new graphic) and clears before the tooth.
+   The alpha ramp is tuned to the CURRENT photograph. It was originally set
+   at 0.82 → 0.60 → 0.28 for the previous, much darker studio shot, whose
+   wall measured ~lum 28; on this brighter treatment-room shot the same wash
+   drops the wall to ~lum 22 and the entire left half reads as a black
+   rectangle. Halving it keeps the wall legible as green (white copy still
+   clears 8:1) instead of painting a near-black field over it. */
 .hero-overlay-wrap::before {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(
     90deg,
-    rgba(4, 19, 14, 0.82) 0%,
-    rgba(4, 19, 14, 0.6) 26%,
-    rgba(4, 19, 14, 0.28) 44%,
+    rgba(4, 19, 14, 0.38) 0%,
+    rgba(4, 19, 14, 0.24) 26%,
+    rgba(4, 19, 14, 0.09) 44%,
     rgba(4, 19, 14, 0) 62%
   );
 }
@@ -1155,19 +1122,9 @@ body {
 }
 
 @media (max-width: 768px) {
-  /* The hero video is deliberately static at this width (see
-     HERO_VIDEO_STATIC_QUERY in script.js), so the 420vh scrub range that the
-     desktop hero uses to play the footage is scroll with nothing to show for
-     it: the copy is gone after 480px and the poster never changes again.
-     Keep the 480px copy fade, a short 12vh poster hold, the full 100vh
-     bridge window and the 200vh overlap the clinic's -200vh margin consumes;
-     cut only the unused scrub. 200vh + 12vh + 480px is the floor that keeps
-     the fade complete before the bridge at the shortest phone (320×568),
-     while tall phones no longer hold a blank poster for half a screen. The
-     480px mirrors the fade in script.js; measureBridge() reads the live
-     boxes, so the bridge still spans exactly 100vh and the clinic keeps its
-     own 620vh pacing. */
-  /* Mobile hero maintains the full 620vh height matching desktop */
+  /* The mobile hero shares the desktop 300vh section height, so the bridge
+     window and clinic pacing stay identical across mobile, tablet and
+     desktop viewports. */
 
   /* The hero's top padding scales at 11vh while the bar's scales at 2.5vh,
      so above ~760px the old pair closed to 1–3px. With the bar now solid
@@ -1188,9 +1145,9 @@ body {
   }
 
   /* Stacked mobile composition: headline, description, CTA and the 2 × 2
-     badge block form one compact group at the top. The media is cropped
-     taller below, so the subject starts after the group instead of sitting
-     under bottom-pinned controls. */
+     badge block form one compact group. On portrait the photograph takes the
+     top of the hero and this group is centred in the band beneath it (see the
+     portrait block); landscape phones keep the group clear of the subject. */
   #hero-content {
     min-height: 100svh;
     justify-content: flex-start;
@@ -1202,13 +1159,17 @@ body {
      It stays denser through the CTA/badge group and clears before the tooth,
      keeping the badges off the subject while the hands and tooth remain lit. */
   .hero-overlay-wrap::before {
+    /* Same rationale as the desktop wash: the old 0.97 → 0.90 ramp was
+       measured against the previous dark shot and turned the whole upper
+       half of the phone hero into a flat black field. Lowered so the
+       photograph's wall still reads as green behind the copy. */
     background: linear-gradient(
       180deg,
-      rgba(4, 19, 14, 0.97) 0%,
-      rgba(4, 19, 14, 0.9) 28%,
-      rgba(4, 19, 14, 0.68) 43%,
-      rgba(4, 19, 14, 0.3) 52%,
-      rgba(4, 19, 14, 0.08) 61%,
+      rgba(4, 19, 14, 0.62) 0%,
+      rgba(4, 19, 14, 0.5) 28%,
+      rgba(4, 19, 14, 0.32) 43%,
+      rgba(4, 19, 14, 0.14) 52%,
+      rgba(4, 19, 14, 0.04) 61%,
       rgba(4, 19, 14, 0) 70%
     );
   }
@@ -1261,22 +1222,8 @@ body {
     line-height: 1.2;
   }
 
-  /* Crop the portrait frame taller rather than zooming it: the tooth and
-     hands grow and sit lower in the frame, beneath the CTA/badge group. The
-     small scroll-linked nudge is kept so script.js still eases the frame as
-     the copy fades. The poster/first video frame carries a baked-in black
-     top border (~4 source px); clip only that border so the bar area blends
-     into the frame. */
-  #hero-media {
-    height: 160%;
-    bottom: auto;
-    translate: 0 var(--hero-canvas-shift, 24px);
-    transform-origin: 50% 0;
-  }
-  .hero-poster,
-  .hero-video {
-    clip-path: inset(0.6% 0 0 0);
-  }
+  /* The frame itself is no longer sized here: the portrait rule further
+     down re-cuts it as a top panel that never stretches the photograph. */
 }
 
 /* Phone-height viewports: a tighter pill keeps both badge rows inside the
@@ -1521,29 +1468,19 @@ body {
     font-size: 11.5px;
     line-height: 1.08;
   }
-  /* The ≤768 rule uses the tall portrait crop. In landscape the copy sits
-     on the left, so restore the full-height frame and park the subject on
-     the right exactly like the desktop composition. */
+  /* The portrait rule further down re-cuts the frame as a bottom band; in
+     landscape the media fills the viewport and contain centres the complete
+     photograph inside it, so nothing is cropped here either. */
   #hero-media {
     height: 100%;
     bottom: 0;
-    translate: 20% -5%;
+    translate: none;
     transform-origin: 50% 45%;
-    scale: 1.16;
+    scale: none;
   }
-  /* Same left-edge tone fade as the desktop composition, painted as an
-     overlay instead of masking the media (see the >=769px rule). */
-  .hero-media::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 10%;
-    z-index: 2;
-    pointer-events: none;
-    background: linear-gradient(90deg, #071913 0%, rgba(7, 25, 19, 0) 100%);
-  }
+  /* The left-edge tone fade that used to sit here has been removed for the
+     same reason as the desktop one: it was a solid #071913 strip on top of
+     the scrim, not a tone that belonged to the photograph. */
 }
 
 /* On 600–740px-tall landscape panels the 23vh top pad used by the short
@@ -1598,37 +1535,43 @@ body {
     font-size: clamp(12px, 3.25vw, 13.5px);
     line-height: 1.15;
   }
-  /* Keep the tooth below the copy on every phone height. The offset moves
-     the frame down on short screens and lifts it on tall ones, where the
-     taller crop would otherwise leave a dead band under the cards. The width
-     term gives the wider 412–430px phones, whose headline wraps taller, the
-     extra clearance they need without adding another height band. */
-  #hero-media {
-    --hero-media-extra-offset: 0px;
-    top: calc(
-      clamp(-40px, calc(165px - 22vh), 40px) +
-      max(0px, calc((100vw - 390px) * 0.5)) +
-      var(--hero-media-extra-offset)
-    );
-  }
 }
 
-/* The shortest screens need a little more air between the second badge row
-   and the crown; 8px is enough to keep the subject from reading as part of
-   the card block. */
-@media (max-width: 430px) and (max-height: 680px) and (orientation: portrait) {
-  #hero-media {
-    --hero-media-extra-offset: 8px;
-  }
-}
 
-/* 412-class Android panels sit between the short-phone and tall-phone crops;
-   their larger headline leaves the tooth a few pixels higher than the linear
-   media offset accounts for. Keep a clear gap above it without moving the
-   image into a visible top band. */
-@media (max-width: 430px) and (min-height: 721px) and (max-height: 760px) and (orientation: portrait) {
+/* ─── Portrait viewports: the photograph is the hero, copy on top of it ──
+   The frame is 1793:877 (2.04:1) and a phone is roughly 0.46:1, so the
+   photograph has to be cropped hard to cover a portrait screen - that is the
+   price of the copy sitting on the clinic itself instead of on a band of
+   page ground. object-fit: cover keeps the proportions honest, and the 62%
+   anchor centres the gloved grip (25.7% of the frame's width) in the slice
+   that survives the crop, so both hands and the molar stay in frame at every
+   portrait aspect, phone or tablet.
+
+   The copy stays top-anchored and the vertical legibility wash is kept over
+   it, so the headline, CTA and badges read against the photograph. */
+@media (max-aspect-ratio: 1/1) {
   #hero-media {
-    top: 24px;
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    background-color: transparent;
+  }
+  .hero-image {
+    object-fit: cover;
+    /* Centre the grip rather than the frame (see the base rule for the 28%
+       landscape anchor): the subject sits at ~59% of the frame's width. */
+    object-position: 62% center;
+    /* No feathered edge anywhere: the photograph runs to all four edges. */
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  /* Copy at the top of the hero, over the calm wall, rather than centred on
+     the hands. Height-aware padding keeps it under the fixed bar at every
+     phone and tablet height. */
+  #hero-content {
+    justify-content: flex-start;
+    padding-top: clamp(84px, 11vh, 110px);
+    padding-bottom: max(clamp(16px, 3vh, 30px), calc(12px + env(safe-area-inset-bottom, 0px)));
   }
 }
 
@@ -4491,10 +4434,84 @@ html:not(.js) .dentist-dialog-body {
   }
 }
 
+/* ─── Phones: compact footer ───────────────────────────────────────────
+   Nothing is dropped: logo, description, both link lists, contact block
+   and copyright all remain. What changes is the rhythm — the two link
+   lists sit side by side instead of being stacked one under another,
+   every gap/padding/margin is tightened, and the headings shrink a step.
+   Link tap targets stay ~24px tall, so the lists stay touch-friendly. */
 @media (max-width: 640px) {
+  .site-footer-inner {
+    padding-top: 30px;
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
   .site-footer-grid {
-    grid-template-columns: 1fr;
-    gap: 34px;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px 18px;
+  }
+
+  .site-footer-brand,
+  .site-footer-contact-col {
+    grid-column: 1 / -1;
+  }
+
+  .site-footer-mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .site-footer-name {
+    font-size: 15.5px;
+  }
+
+  .site-footer-desc {
+    max-width: none;
+    margin-top: 10px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  .site-footer-heading {
+    margin-bottom: 8px;
+    font-size: 11px;
+    letter-spacing: 0.09em;
+  }
+
+  .site-footer-list {
+    gap: 3px;
+  }
+
+  .site-footer-list a {
+    padding: 4px 0;   /* ~24px tap target */
+    font-size: 13.5px;
+    line-height: 1.4;
+  }
+
+  .site-footer-contact {
+    gap: 8px;
+  }
+
+  .site-footer-contact li {
+    gap: 8px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  .site-footer-icon {
+    margin-top: 2px;
+  }
+
+  .site-footer-when {
+    font-size: 12.5px;
+  }
+
+  .site-footer-bottom {
+    margin-top: 24px;
+    padding: 14px 0 16px;
+    font-size: 12px;
+    line-height: 1.5;
   }
 }
 
