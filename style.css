@@ -429,7 +429,7 @@ body {
   z-index: 2; /* clinic environment composites above the pinned hero */
   /* The section box starts inside the first viewport once the mobile hero
      is shortened (its top is the bridge start). While still transparent it
-     must not swallow clicks meant for the hero CTA / badges. The sticky
+     must not swallow clicks meant for the hero CTA. The sticky
      viewport below is re-enabled by script.js when the clinic is actually
      settled, so the clinic's own content stays interactive. */
   pointer-events: none;
@@ -583,11 +583,9 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  /* Centre the copy block in the usable viewport below the fixed bar. The
-     old extra bottom padding survived from the top-anchored composition and
-     pushed the whole group ~12–20px high, which read as a heavy empty band
-     under the badges. With no bottom pad the optical gaps above and below the
-     copy are balanced at every desktop height. */
+  /* Centre the copy block in the usable viewport below the fixed bar. With
+     no bottom pad the optical gaps above and below the copy are balanced at
+     every desktop height. */
   justify-content: center;
   padding: clamp(80px, 6vw, 96px) clamp(24px, 5vw, 96px) 0;
   transition: opacity 0.2s ease-out, transform 0.2s ease-out;
@@ -595,7 +593,7 @@ body {
 }
 
 /* The copy owns the left column; 46vw keeps the headline clear of the tooth
-   on the right. The badge row is allowed to run slightly wider. */
+   on the right. */
 .hero-heading {
   text-align: left;
   margin: 0;
@@ -645,74 +643,6 @@ body {
   gap: 10px;
   padding: 16px 32px;
   font-size: 16px;
-}
-
-/* ─── Feature badges (one compact row beneath the CTA) ─── */
-.features-zone {
-  flex: none;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  width: 100%;
-  max-width: min(720px, 52vw);
-  margin-top: clamp(22px, 3.2vh, 30px);
-  padding: 0;
-  pointer-events: auto;
-}
-
-.pills-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, max-content));
-  align-items: stretch;
-  justify-content: start;
-  gap: clamp(10px, 1.1vw, 16px);
-  width: 100%;
-  max-width: none;
-  margin: 0;
-}
-
-.feature-pill {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 17px;
-  min-height: 64px;
-  background: rgba(7, 25, 19, 0.58);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: border-color 0.25s ease, background-color 0.25s ease;
-}
-
-.feature-pill:hover {
-  border-color: rgba(94, 234, 212, 0.35);
-  background: rgba(7, 25, 19, 0.72);
-}
-
-.pill-icon {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  flex: none;
-  border-radius: 10px;
-  background: rgba(45, 212, 191, 0.14);
-}
-
-.pill-icon img {
-  display: block;
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-}
-
-.pill-text {
-  color: rgba(255, 255, 255, 0.88);
-  font-size: clamp(13px, 1.05vw, 14.5px);
-  font-weight: 600;
-  line-height: 1.28;
-  letter-spacing: -0.005em;
 }
 
 .cta-primary-btn {
@@ -1059,49 +989,20 @@ body {
   }
 }
 
-/* ─── Hero Pills Responsive ─── */
+/* ─── Hero CTA Responsive ─── */
 
-/* Tablet / narrow desktop: the copy still owns the left column, but a
-   four-across badge row no longer fits beside the tooth. The same four
-   badges become a 2 × 2 block in reading order. Keep this through 1279px:
-   at 1180–1279 the four-across row reached the glove, so the four-across
-   composition starts only where it has clear air beside the subject. */
+/* Tablet / narrow desktop: a slightly smaller CTA keeps the copy column
+   proportional beside the subject. */
 @media (min-width: 769px) and (max-width: 1279px) {
-  .features-zone {
-    max-width: min(430px, 52vw);
-  }
   .hero-cta .cta-primary-btn {
     padding: 14px 28px;
     font-size: 15px;
-  }
-  .pills-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: auto auto;
-    gap: 10px;
-  }
-  .feature-pill {
-    padding: 8px 13px;
-    min-height: 52px;
-    gap: 9px;
-  }
-  .pill-icon {
-    width: 34px;
-    height: 34px;
-  }
-  .pill-icon img {
-    width: 22px;
-    height: 22px;
-  }
-  .pill-text {
-    font-size: 13px;
   }
 }
 
 /* Large desktop: give the copy column a slightly stronger editorial scale so
    the headline no longer floats as a small block in a tall viewport. The
-   wider heading still stops well before the tooth; the badge height grows
-   with it so the group reads as one deliberate stack rather than a wide gap
-   between a large image and small controls. */
+   wider heading still stops well before the tooth. */
 @media (min-width: 1280px) {
   .hero-heading {
     max-width: min(720px, 49vw);
@@ -1111,13 +1012,6 @@ body {
   }
   .hero-subtitle {
     font-size: clamp(16px, 1.6vw, 24px);
-  }
-  .features-zone {
-    margin-top: clamp(24px, 3.4vh, 32px);
-  }
-  .feature-pill {
-    min-height: 68px;
-    padding: 13px 15px;
   }
 }
 
@@ -1144,10 +1038,9 @@ body {
     min-height: 100svh;
   }
 
-  /* Stacked mobile composition: headline, description, CTA and the 2 × 2
-     badge block form one compact group. On portrait the photograph takes the
-     top of the hero and this group is centred in the band beneath it (see the
-     portrait block); landscape phones keep the group clear of the subject. */
+  /* Stacked mobile composition: headline, description and CTA form one
+     compact group at the top of the hero; landscape phones keep the group
+     clear of the subject. */
   #hero-content {
     min-height: 100svh;
     justify-content: flex-start;
@@ -1156,8 +1049,8 @@ body {
   }
 
   /* On a portrait crop the copy is at the top, so the scrim runs vertically.
-     It stays denser through the CTA/badge group and clears before the tooth,
-     keeping the badges off the subject while the hands and tooth remain lit. */
+     It stays denser through the copy and clears before the tooth, so the
+     hands and tooth remain lit. */
   .hero-overlay-wrap::before {
     /* Same rationale as the desktop wash: the old 0.97 → 0.90 ramp was
        measured against the previous dark shot and turned the whole upper
@@ -1193,68 +1086,13 @@ body {
     padding: 13px 26px;
     font-size: 15px;
   }
-  .features-zone {
-    width: 100%;
-    max-width: 100%;
-    margin-top: 14px;
-  }
-  .pills-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: auto auto;
-    gap: 8px 10px;
-    max-width: 460px;
-  }
-  .feature-pill {
-    padding: 9px 12px;
-    min-height: 48px;
-    gap: 9px;
-  }
-  .pill-icon {
-    width: 31px;
-    height: 31px;
-  }
-  .pill-icon img {
-    width: 21px;
-    height: 21px;
-  }
-  .pill-text {
-    font-size: 12.5px;
-    line-height: 1.2;
-  }
 
   /* The frame itself is no longer sized here: the portrait rule further
-     down re-cuts it as a top panel that never stretches the photograph. */
+     down re-cuts it as a full-bleed photograph that never stretches. */
 }
 
-/* Phone-height viewports: a tighter pill keeps both badge rows inside the
-   bottom cluster. Taller tablets keep the roomier mobile pill. */
-@media (max-width: 768px) and (max-height: 960px) {
-  .pills-row {
-    gap: 8px 10px;
-  }
-  .feature-pill {
-    padding: 2.5px 13px;
-    min-height: 37px;
-    gap: 8px;
-  }
-  .pill-icon {
-    width: 30px;
-    height: 30px;
-  }
-  .pill-icon img {
-    width: 21px;
-    height: 21px;
-  }
-  .pill-text {
-    line-height: 1.1;
-  }
-}
-
-/* Shorter phones and the common 360×640 / 360×800 Android panels: the same
-   four cards keep their icon/text styling but lose the leftover height that
-   was pushing the second row into the tooth. This is height-driven, not a
-   fixed offset: it keeps the badge block inside the top copy zone while the
-   portrait media keeps its existing crop and scroll nudge. */
+/* Shorter phones and the common 360×640 / 360×800 Android panels: the copy
+   and CTA are tightened so the block stays inside the top copy zone. */
 @media (max-width: 768px) and (max-height: 800px) {
   .hero-subtitle {
     margin-top: 10px;
@@ -1262,35 +1100,12 @@ body {
   .hero-cta {
     margin-top: 12px;
   }
-  .features-zone {
-    margin-top: 8px;
-  }
-  .pills-row {
-    gap: 6px 10px;
-  }
-  .feature-pill {
-    min-height: 34px;
-    padding: 4px 11px;
-    gap: 8px;
-  }
-  .pill-icon {
-    width: 26px;
-    height: 26px;
-  }
-  .pill-icon img {
-    width: 20px;
-    height: 20px;
-  }
-  .pill-text {
-    line-height: 1.05;
-  }
 }
 
 /* Short phones and compact portrait panels (320–600px wide): the copy and
-   action group at the top are tightened, while the tall media crop keeps the
-   tooth and hands below the badges. The bar itself gets a compact but uniform
-   height here, so its opaque background (≤960px) never reaches the headline
-   at 66px. */
+   action group at the top are tightened. The bar itself gets a compact but
+   uniform height here, so its opaque background (≤960px) never reaches the
+   headline at 66px. */
 @media (max-width: 600px) and (max-height: 720px) {
   #navbar,
   #navbar.nav-scrolled {
@@ -1315,29 +1130,6 @@ body {
     padding: 11px 22px;
     font-size: 14.5px;
   }
-  .features-zone {
-    margin-top: 6px;
-  }
-  .pills-row {
-    gap: 4px 8px;
-  }
-  .feature-pill {
-    padding: 3px 10px;
-    min-height: 32px;
-    gap: 7px;
-  }
-  .pill-icon {
-    width: 26px;
-    height: 26px;
-  }
-  .pill-icon img {
-    width: 19px;
-    height: 19px;
-  }
-  .pill-text {
-    font-size: 12px;
-    line-height: 1;
-  }
 }
 
 /* The 320-class bar is 59px tall, but at 431–600px it is ~65px; the 66px
@@ -1348,9 +1140,8 @@ body {
   }
 }
 
-/* Near-square 601–700px compact panels use the same tight badge block, but
-   the mobile bar is still 65px tall; 80px keeps a visible gap without pushing
-   the second badge row into the tooth at 601×601. */
+/* Near-square 601–700px compact panels: the mobile bar is still 65px tall;
+   80px keeps a visible gap under it. */
 @media (min-width: 601px) and (max-width: 700px) and (max-height: 680px) {
   #hero-content {
     padding-top: 80px;
@@ -1358,11 +1149,10 @@ body {
 }
 
 /* Very short phones (320×568) and compact 431–700px panels (480×640,
-   600×600, and the near-square 601–700px cases): keep the four badges intact
-   and readable, but give the second row enough clearance above the tooth.
-   This is the only height band where the CTA drops under the 44px comfort
-   height; the button still exceeds the 24px accessibility minimum by a wide
-   margin. */
+   600×600, and the near-square 601–700px cases): the copy block is scaled
+   down to stay inside the panel. This is the only height band where the CTA
+   drops under the 44px comfort height; the button still exceeds the 24px
+   accessibility minimum by a wide margin. */
 @media (max-width: 430px) and (max-height: 620px),
        (min-width: 431px) and (max-width: 700px) and (max-height: 680px) {
   .hero-heading h1 {
@@ -1381,44 +1171,21 @@ body {
     padding: 9px 20px;
     font-size: 14px;
   }
-  .features-zone {
-    margin-top: 6px;
-  }
-  .pills-row {
-    gap: 3px 8px;
-  }
-  .feature-pill {
-    min-height: 30px;
-    padding: 3px 9px;
-  }
-  .pill-icon {
-    width: 24px;
-    height: 24px;
-  }
-  .pill-icon img {
-    width: 18px;
-    height: 18px;
-  }
-  .pill-text {
-    font-size: 12px;
-    line-height: 1;
-  }
 }
 
 /* Short landscape (phones held sideways, small tablets): the two-column
-   composition is kept, but the copy, CTA and 2 × 2 badge block are compact
-   enough to stay inside the visible height beside the subject. The second
-   condition covers 600–900px-wide landscape panels such as 768×600, where
-   the portrait stack would otherwise put the badge row over the tooth.
+   composition is kept, but the copy and CTA are compact enough to stay inside
+   the visible height beside the subject. The second condition covers
+   600–900px-wide landscape panels such as 768×600.
    Desktop and taller landscape windows are untouched. */
 @media (max-height: 540px) and (orientation: landscape) and (max-width: 1024px),
        (min-width: 600px) and (max-width: 900px) and (max-height: 740px) and (orientation: landscape) {
   #hero-content {
     /* 23vh keeps ~15px of air under the bar on 390px-tall phones while
-       pulling the copy up on 320px-tall ones so the second badge row clears
-       the sticky viewport (iPad side-by-side, iPhone SE landscape). The
-       ≤768px portrait rule forces flex-start, so explicitly re-centre the
-       side-by-side copy on 768px-wide short panels as well. */
+       pulling the copy up on 320px-tall ones so it clears the sticky
+       viewport (iPad side-by-side, iPhone SE landscape). The ≤768px portrait
+       rule forces flex-start, so explicitly re-centre the side-by-side copy
+       on 768px-wide short panels as well. */
     justify-content: center;
     padding-top: max(70px, 23vh);
     padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
@@ -1442,35 +1209,8 @@ body {
     padding: 10px 20px;
     font-size: 14px;
   }
-  .features-zone {
-    max-width: min(390px, 44vw);
-    margin-top: 10px;
-  }
-  .pills-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: auto auto;
-    gap: 6px 8px;
-  }
-  .feature-pill {
-    padding: 3px 9px;
-    min-height: 30px;
-    gap: 6px;
-  }
-  .pill-icon {
-    width: 26px;
-    height: 26px;
-  }
-  .pill-icon img {
-    width: 20px;
-    height: 20px;
-  }
-  .pill-text {
-    font-size: 11.5px;
-    line-height: 1.08;
-  }
-  /* The portrait rule further down re-cuts the frame as a bottom band; in
-     landscape the media fills the viewport and contain centres the complete
-     photograph inside it, so nothing is cropped here either. */
+  /* Landscape media fills the viewport; the photograph is never cropped by
+     this rule. */
   #hero-media {
     height: 100%;
     bottom: 0;
@@ -1494,11 +1234,8 @@ body {
   }
 }
 
-/* Portrait phones: give the copy, CTA and badge block a consistent breathing
-   scale. The earlier height bands removed height from the cards to keep them
-   off the tooth; here the media offset is tuned instead, so the cards can keep
-   real padding and gaps at every phone height. The frame moves down on short
-   screens and up on taller ones to keep a steady gap above the crown. */
+/* Portrait phones: give the copy and CTA a consistent breathing scale and a
+   steady clearance under the fixed bar at every phone height. */
 @media (max-width: 430px) and (orientation: portrait) {
   #hero-content {
     padding-top: clamp(80px, 12vh, 112px);
@@ -1511,29 +1248,6 @@ body {
   }
   .hero-cta {
     margin-top: clamp(14px, 2.2vh, 18px);
-  }
-  .features-zone {
-    margin-top: clamp(14px, 2.2vh, 18px);
-  }
-  .pills-row {
-    gap: clamp(10px, 1.4vh, 12px) clamp(10px, 2.5vw, 12px);
-  }
-  .feature-pill {
-    padding: clamp(6px, 1.1vh, 9px) clamp(10px, 2.6vw, 13px);
-    min-height: clamp(44px, 5.4vh, 48px);
-    gap: clamp(7px, 1.6vw, 9px);
-  }
-  .pill-icon {
-    width: clamp(26px, 6.8vw, 29px);
-    height: clamp(26px, 6.8vw, 29px);
-  }
-  .pill-icon img {
-    width: clamp(18px, 4.8vw, 21px);
-    height: clamp(18px, 4.8vw, 21px);
-  }
-  .pill-text {
-    font-size: clamp(12px, 3.25vw, 13.5px);
-    line-height: 1.15;
   }
 }
 
@@ -1548,7 +1262,7 @@ body {
    portrait aspect, phone or tablet.
 
    The copy stays top-anchored and the vertical legibility wash is kept over
-   it, so the headline, CTA and badges read against the photograph. */
+   it, so the headline and CTA read against the photograph. */
 @media (max-aspect-ratio: 1/1) {
   #hero-media {
     top: 0;
@@ -4192,7 +3906,6 @@ html:not(.js) .dentist-dialog-body {
   --foot-muted: rgba(198, 227, 224, 0.78); /* 8.4:1 */
   --foot-aqua: #5eead4;      /* 12.2:1, the site's accent text */
   --foot-hair: rgba(94, 234, 212, 0.16);   /* the site's hairline */
-  --foot-scrim: rgba(6, 26, 24, 0.78);     /* video overlay: keeps copy AA-safe */
 
   position: relative;
   isolation: isolate;
@@ -4200,44 +3913,6 @@ html:not(.js) .dentist-dialog-body {
   background-color: var(--foot-deep);
   color: var(--foot-text);
   border-top: 1px solid var(--foot-hair);
-}
-
-/* Decorative footage. It is purely presentational and sits behind the
-   scrim and the inner footer row, so it can never catch a pointer event. */
-.site-footer-media {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  background-color: var(--foot-deep);
-}
-
-.site-footer-video {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-  /* The instrument heads sit high in the 16:9 source. On wide, short
-     footers a centre crop reduces them to bare handles, so bias the
-     frame upward; tall tablet/phone footers keep the full height. */
-  object-position: center 30%;
-  opacity: 0;
-}
-
-.site-footer.footer-video-on .site-footer-video {
-  opacity: 1;
-}
-
-.site-footer-media::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background-color: var(--foot-scrim);
 }
 
 .site-footer-inner {
@@ -4516,10 +4191,6 @@ html:not(.js) .dentist-dialog-body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .site-footer-media {
-    display: none;
-  }
-
   .site-footer-list a,
   .site-footer-contact a {
     transition: none !important;

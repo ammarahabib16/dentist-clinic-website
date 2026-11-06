@@ -84,7 +84,7 @@
        scroll-linked video scrub was removed: a still cover-fit image is
        deterministic on every device, needs no decoder, and cannot stall
        into a frozen frame.
-       The hero copy, CTA and feature pills sit above it unchanged.
+       The hero copy and CTA sit above it unchanged.
        ════════════════════════════════════════════════════════════════ -->
   <section id="hero-section" class="scroll-sequence-section" aria-label="Hero">
     <div class="sticky-viewport">
@@ -97,8 +97,8 @@
       <div id="hero-overlay" class="hero-overlay-wrap">
         <div id="hero-content">
 
-          <!-- Left-aligned copy column: headline → description → CTA →
-               feature badges, matching the hero reference composition. -->
+          <!-- Left-aligned copy column: headline → description → CTA,
+               matching the hero reference composition. -->
           <div class="hero-heading">
             <h1>
               <span class="title-line">Healthier Smiles</span>
@@ -113,44 +113,6 @@
               Book Visit
               <!-- <span class="arrow-icon" aria-hidden="true">&rarr;</span> -->
             </a>
-          </div>
-
-          <!-- 4 Feature Highlights (one compact row beneath the CTA) -->
-          <div class="features-zone" aria-label="Key features">
-            <div class="pills-row">
-              <!-- Feature 1: Expert Care -->
-              <div class="feature-pill">
-                <div class="pill-icon" aria-hidden="true">
-                  <img src="hero-section-icons/expert_care.png" alt="" width="512" height="512" decoding="async">
-                </div>
-                <span class="pill-text">Expert Care</span>
-              </div>
-
-              <!-- Feature 2: Advanced Technology -->
-              <div class="feature-pill">
-                <div class="pill-icon" aria-hidden="true">
-                  <img src="hero-section-icons/advanced-technology.png" alt="" width="512" height="512"
-                    decoding="async">
-                </div>
-                <span class="pill-text">Advanced<br>Technology</span>
-              </div>
-
-              <!-- Feature 3: Healthy Smiles -->
-              <div class="feature-pill">
-                <div class="pill-icon" aria-hidden="true">
-                  <img src="hero-section-icons/healty_smile.png" alt="" width="512" height="512" decoding="async">
-                </div>
-                <span class="pill-text">Healthy<br>Smiles</span>
-              </div>
-
-              <!-- Feature 4: Confident You -->
-              <div class="feature-pill">
-                <div class="pill-icon" aria-hidden="true">
-                  <img src="hero-section-icons/confident_you.png" alt="" width="512" height="512" decoding="async">
-                </div>
-                <span class="pill-text">Confident<br>You</span>
-              </div>
-            </div>
           </div>
 
         </div>
@@ -245,7 +207,7 @@
       <video class="services-footage" poster="services-backdrop-poster.jpg?v=2" muted loop playsinline autoplay
         preload="auto">
         <source
-          src="https://res.cloudinary.com/deoxcbs9b/video/upload/v1792440282/Dental_website_background_animation_20261020005844.mp4"
+          src="https://res.cloudinary.com/deoxcbs9b/video/upload/v1793944880/Dental_professionals_polishing_t__4b182c9a.mp4"
           type="video/mp4">
       </video>
     </div>
@@ -819,16 +781,10 @@
        FOOTER
        Third and last step of the page's colour progression: teal glass
        stages (services, dentist) -> warm ivory (location) -> deep green.
-       A decorative muted video sits behind a flat deep-green scrim; the
-       footer copy, links and focus rings stay above it in the same
-       layout. The solid ground is also the no-video fallback.
+       Flat deep-green ground with the footer copy, links and focus rings
+       directly on it: no footage, no scrim.
        ════════════════════════════════════════════════════════════════ -->
   <footer class="site-footer">
-    <div class="site-footer-media" aria-hidden="true">
-      <video class="site-footer-video"
-        data-src="https://res.cloudinary.com/deoxcbs9b/video/upload/v1792720314/Dentist_holding_dental_instruments_20261023064917.mp4"
-        autoplay muted loop playsinline preload="none" tabindex="-1" disablepictureinpicture></video>
-    </div>
     <div class="site-footer-inner">
       <div class="site-footer-grid">
 

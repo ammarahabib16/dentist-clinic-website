@@ -670,94 +670,9 @@ document.documentElement.classList.add('js');
     if (slot.textContent.trim() !== year) slot.textContent = year;
   }
 
-  // --- Footer: lazy, muted background video -------------------------------
-  // The footage is decorative and only fetched once the footer approaches the
-  // viewport. The solid footer ground is the fallback until a frame is actually
-  // playing, and reduced-motion visitors never request the file at all.
-  function initFooterVideo() {
-    const footer = document.querySelector('.site-footer');
-    const video = footer ? footer.querySelector('.site-footer-video') : null;
-    if (!footer || !video) return;
-
-    const src = video.getAttribute('data-src');
-    if (!src) return;
-
-    let loaded = false;
-    let loading = false;
-    let failed = false;
-
-    const hide = () => footer.classList.remove('footer-video-on');
-
-    const start = () => {
-      if (!loaded || failed || motionQuery.matches) return;
-      video.muted = true;
-      video.playsInline = true;
-      video.loop = true;
-      const attempt = video.play();
-      if (attempt && typeof attempt.catch === 'function') {
-        attempt.catch(hide);
-      }
-    };
-
-    const load = () => {
-      if (loaded || loading || failed || motionQuery.matches) return;
-      loading = true;
-      video.src = src;
-      video.load();
-    };
-
-    video.addEventListener('loadeddata', () => {
-      loading = false;
-      loaded = true;
-      start();
-    }, { once: true });
-
-    video.addEventListener('playing', () => {
-      if (!motionQuery.matches) footer.classList.add('footer-video-on');
-    });
-
-    video.addEventListener('error', () => {
-      loading = false;
-      failed = true;
-      hide();
-      video.removeAttribute('src');
-      video.load();
-    }, { once: true });
-
-    const isNear = () => {
-      const rect = footer.getBoundingClientRect();
-      return rect.top < window.innerHeight + 300 && rect.bottom > -300;
-    };
-
-    if (typeof IntersectionObserver !== 'undefined') {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) {
-            if (loaded) video.pause();
-            return;
-          }
-          if (motionQuery.matches || failed) return;
-          if (!loaded) load();
-          else start();
-        });
-      }, { rootMargin: '300px 0px' });
-      observer.observe(footer);
-    } else if (!motionQuery.matches) {
-      load();
-    }
-
-    if (typeof motionQuery.addEventListener === 'function') {
-      motionQuery.addEventListener('change', () => {
-        if (motionQuery.matches) {
-          video.pause();
-          hide();
-        } else if (isNear()) {
-          if (!loaded && !failed) load();
-          else start();
-        }
-      });
-    }
-  }
+  // --- Footer: the year slot ---------------------------------------------
+  // (The footer no longer carries background footage: the flat deep-green
+  // ground is the whole surface, so there is nothing to load or pause here.)
 
   // --- Book Appointment dialog -------------------------------------------
   // One booking surface for the whole page: the navbar's "Book Visit" CTA and
@@ -1702,7 +1617,6 @@ document.documentElement.classList.add('js');
   initServicesFootage();
   initLocationReveal();
   initFooterYear();
-  initFooterVideo();
   initAppointmentDialog();
   initDentistWater();
   initDentistReveal();
